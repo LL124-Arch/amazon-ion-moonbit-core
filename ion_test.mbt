@@ -207,3 +207,17 @@ test "byte input format detection" {
   }
   assert_eq(error.kind(), @model.ErrorKind::InvalidUtf8)
 }
+
+///|
+test "document analysis counts nested payloads" {
+  let values = @decode.parse_text(
+    "ann::{name: \"ion\", bytes: {{aGk=}}, items: [1, 2]}",
+  ) catch {
+    _ => []
+  }
+  let stats = analyze(values[:])
+  assert_eq(stats.value_count(), 6)
+  assert_eq(stats.max_depth(), 3)
+  assert_eq(stats.symbol_count(), 4)
+  assert_eq(stats.payload_bytes(), 22)
+}
