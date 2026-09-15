@@ -194,6 +194,84 @@ pub fn IonValue::empty_list() -> IonValue {
 }
 
 ///|
+/// Return the Ion type of a value, ignoring any annotations around it.
+pub fn IonValue::kind(self : IonValue) -> IonNull {
+  match self {
+    Null(kind) => kind
+    Bool(_) => IonNull::Bool
+    Int(_) => IonNull::Int
+    Float(_) => IonNull::Float
+    Decimal(_) => IonNull::Decimal
+    Timestamp(_) => IonNull::Timestamp
+    Symbol(_) => IonNull::Symbol
+    String(_) => IonNull::String
+    Blob(_) => IonNull::Blob
+    Clob(_) => IonNull::Clob
+    List(_) => IonNull::List
+    Sexp(_) => IonNull::Sexp
+    Struct(_) => IonNull::Struct
+    Annotated(_, value) => value.kind()
+  }
+}
+
+///|
+/// Report whether a value is either a plain or typed Ion null.
+pub fn IonValue::is_null(self : IonValue) -> Bool {
+  match self {
+    Null(_) => true
+    Annotated(_, value) => value.is_null()
+    _ => false
+  }
+}
+
+///|
+/// Return a copy of the annotations attached to a value.
+pub fn IonValue::annotations(self : IonValue) -> Array[IonSymbol] {
+  let result : Array[IonSymbol] = []
+  match self {
+    Annotated(annotations, _) =>
+      for annotation in annotations {
+        result.push(annotation)
+      }
+    _ => ()
+  }
+  result
+}
+
+///|
+/// Attach annotations while keeping existing annotations in their original order.
+pub fn IonValue::with_annotations(
+  self : IonValue,
+  annotations : ArrayView[IonSymbol],
+) -> IonValue {
+  if annotations.length() == 0 {
+    return self
+  }
+  let combined : Array[IonSymbol] = []
+  for annotation in annotations {
+    combined.push(annotation)
+  }
+  match self {
+    Annotated(existing, value) => {
+      for annotation in existing {
+        combined.push(annotation)
+      }
+      Annotated(combined, value)
+    }
+    _ => Annotated(combined, self)
+  }
+}
+
+///|
+/// Remove all annotations and return the underlying value.
+pub fn IonValue::without_annotations(self : IonValue) -> IonValue {
+  match self {
+    Annotated(_, value) => value.without_annotations()
+    _ => self
+  }
+}
+
+///|
 pub(all) enum LimitKind {
   TotalBytes
   Depth

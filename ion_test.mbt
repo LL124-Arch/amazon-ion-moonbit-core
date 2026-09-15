@@ -107,3 +107,17 @@ test "long quoted strings and clobs" {
   }
   assert_eq(clob, b"ABC\nDEF")
 }
+
+///|
+test "value model annotation and kind helpers" {
+  let original = @model.IonValue::null(kind=@model.IonNull::String)
+  assert_eq(original.kind(), @model.IonNull::String)
+  assert_eq(original.is_null(), true)
+  let annotated = original.with_annotations(
+    [@model.IonSymbol::from_text("config")][:],
+  )
+  assert_eq(annotated.kind(), @model.IonNull::String)
+  assert_eq(annotated.is_null(), true)
+  assert_eq(annotated.annotations().length(), 1)
+  assert_eq(annotated.without_annotations(), original)
+}
