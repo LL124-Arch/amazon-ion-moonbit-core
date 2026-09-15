@@ -272,6 +272,59 @@ pub fn IonValue::without_annotations(self : IonValue) -> IonValue {
 }
 
 ///|
+/// Return a copy of the elements in a list or s-expression.
+pub fn IonValue::elements(self : IonValue) -> Array[IonValue] {
+  let result : Array[IonValue] = []
+  match self.without_annotations() {
+    List(values) | Sexp(values) =>
+      for value in values {
+        result.push(value)
+      }
+    _ => ()
+  }
+  result
+}
+
+///|
+/// Return a copy of the ordered fields in a struct.
+pub fn IonValue::fields(self : IonValue) -> Array[(IonSymbol, IonValue)] {
+  let result : Array[(IonSymbol, IonValue)] = []
+  match self.without_annotations() {
+    Struct(fields) =>
+      for field in fields {
+        result.push(field)
+      }
+    _ => ()
+  }
+  result
+}
+
+///|
+/// Return the first struct field whose symbol has the requested text.
+pub fn IonValue::get_field(self : IonValue, name : String) -> IonValue? {
+  for field in self.fields() {
+    match field.0.text_value() {
+      Some(text) if text == name => return Some(field.1)
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
+/// Return all struct fields whose symbols have the requested text.
+pub fn IonValue::get_fields(self : IonValue, name : String) -> Array[IonValue] {
+  let result : Array[IonValue] = []
+  for field in self.fields() {
+    match field.0.text_value() {
+      Some(text) if text == name => result.push(field.1)
+      _ => ()
+    }
+  }
+  result
+}
+
+///|
 pub(all) enum LimitKind {
   TotalBytes
   Depth
