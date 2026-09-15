@@ -169,3 +169,41 @@ test "single value facade operations" {
   }
   assert_eq(error.kind(), @model.ErrorKind::InvalidSyntax)
 }
+
+///|
+test "byte input format detection" {
+  let text_input = b"{answer: 42}"
+  assert_eq(is_binary(text_input), false)
+  let text_value = parse_one_bytes(text_input) catch {
+    _ => @model.IonValue::empty_struct()
+  }
+  assert_eq(text_value.kind(), @model.IonNull::Struct)
+
+  let binary_input = encode_value_binary(text_value) catch { _ => b"" }
+  assert_eq(is_binary(binary_input), true)
+  match binary_version(binary_input) {
+    Some((major, minor)) => {
+      assert_eq(major, 1)
+      assert_eq(minor, 0)
+    }
+    None => assert_eq(true, false)
+  }
+  let binary_value = parse_one_bytes(binary_input) catch {
+    _ => @model.IonValue::empty_struct()
+  }
+  assert_eq(binary_value, text_value)
+
+  let error = try parse_bytes(b"\xFF") catch {
+    error => error
+  } noraise {
+    _ =>
+      @model.IonError::Parse(
+        kind=@model.ErrorKind::InvalidSyntax,
+        offset=0,
+        line=1,
+        column=1,
+        message="test",
+      )
+  }
+  assert_eq(error.kind(), @model.ErrorKind::InvalidUtf8)
+}

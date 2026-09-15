@@ -2,4 +2,5 @@ import {
   "liangqinsheng/ion/decode",
   "liangqinsheng/ion/encode",
   "liangqinsheng/ion/format_model" @model,
+  "moonbitlang/core/encoding/utf8",
 }
