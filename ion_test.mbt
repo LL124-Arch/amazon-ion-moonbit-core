@@ -141,3 +141,31 @@ test "ordered container access preserves duplicate fields" {
     _ => assert_eq(true, false)
   }
 }
+
+///|
+test "single value facade operations" {
+  let value = parse_one_text("{answer: 42}") catch {
+    _ => @model.IonValue::empty_struct()
+  }
+  assert_eq(value.kind(), @model.IonNull::Struct)
+  let text = encode_value_text(value) catch { _ => "" }
+  assert_eq(text, "{answer: 42}")
+  let binary = encode_value_binary(value) catch { _ => b"" }
+  let decoded = parse_one_binary(binary) catch {
+    _ => @model.IonValue::empty_struct()
+  }
+  assert_eq(decoded, value)
+  let error = try parse_one_text("1 2") catch {
+    error => error
+  } noraise {
+    _ =>
+      @model.IonError::Parse(
+        kind=@model.ErrorKind::InvalidSyntax,
+        offset=0,
+        line=1,
+        column=1,
+        message="test",
+      )
+  }
+  assert_eq(error.kind(), @model.ErrorKind::InvalidSyntax)
+}
