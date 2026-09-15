@@ -1,0 +1,5 @@
+import {
+  "liangqinsheng/ion/decode",
+  "liangqinsheng/ion/encode",
+  "liangqinsheng/ion/format_model" @model,
+}

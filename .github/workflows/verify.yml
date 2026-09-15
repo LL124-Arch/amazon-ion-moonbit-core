@@ -1,0 +1,31 @@
+name: verify
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  moonbit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MoonBit toolchain
+        shell: bash
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Toolchain version
+        run: moon version --all
+      - name: Format
+        run: |
+          moon fmt
+          git diff --exit-code
+      - name: Check
+        run: moon check
+      - name: Test
+        run: moon test
+      - name: Stable target builds
+        run: |
+          moon build --target wasm
+          moon build --target js

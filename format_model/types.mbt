@@ -1,0 +1,407 @@
+///|
+pub(all) enum IonNull {
+  Null
+  Bool
+  Int
+  Float
+  Decimal
+  Timestamp
+  Symbol
+  String
+  Blob
+  Clob
+  List
+  Sexp
+  Struct
+} derive(Debug, Eq)
+
+///|
+pub(all) struct IonSymbol {
+  text : String?
+  sid : Int?
+} derive(Debug, Eq)
+
+///|
+pub fn IonSymbol::from_text(text : String) -> IonSymbol {
+  { text: Some(text), sid: None }
+}
+
+///|
+pub fn IonSymbol::from_sid(sid : Int) -> IonSymbol {
+  { text: None, sid: Some(sid) }
+}
+
+///|
+pub fn IonSymbol::unknown() -> IonSymbol {
+  { text: None, sid: Some(0) }
+}
+
+///|
+pub fn IonSymbol::text_value(self : IonSymbol) -> String? {
+  self.text
+}
+
+///|
+pub fn IonSymbol::sid_value(self : IonSymbol) -> Int? {
+  self.sid
+}
+
+///|
+pub(all) struct IonDecimal {
+  coefficient : @bigint.BigInt
+  exponent : Int
+} derive(Debug, Eq)
+
+///|
+pub fn IonDecimal::new(
+  coefficient~ : @bigint.BigInt,
+  exponent~ : Int,
+) -> IonDecimal {
+  { coefficient, exponent }
+}
+
+///|
+pub fn IonDecimal::coefficient(self : IonDecimal) -> @bigint.BigInt {
+  self.coefficient
+}
+
+///|
+pub fn IonDecimal::exponent(self : IonDecimal) -> Int {
+  self.exponent
+}
+
+///|
+pub(all) struct IonTimestamp {
+  offset_minutes : Int?
+  year : Int
+  month : Int?
+  day : Int?
+  hour : Int?
+  minute : Int?
+  second : Int?
+  fraction_exponent : Int?
+  fraction_coefficient : @bigint.BigInt?
+} derive(Debug, Eq)
+
+///|
+pub fn IonTimestamp::new(
+  year~ : Int,
+  month~ : Int?,
+  day~ : Int?,
+  hour~ : Int?,
+  minute~ : Int?,
+  second~ : Int?,
+  offset_minutes~ : Int?,
+  fraction_exponent~ : Int?,
+  fraction_coefficient~ : @bigint.BigInt?,
+) -> IonTimestamp {
+  {
+    offset_minutes,
+    year,
+    month,
+    day,
+    hour,
+    minute,
+    second,
+    fraction_exponent,
+    fraction_coefficient,
+  }
+}
+
+///|
+pub fn IonTimestamp::year(self : IonTimestamp) -> Int {
+  self.year
+}
+
+///|
+pub fn IonTimestamp::month(self : IonTimestamp) -> Int? {
+  self.month
+}
+
+///|
+pub fn IonTimestamp::day(self : IonTimestamp) -> Int? {
+  self.day
+}
+
+///|
+pub fn IonTimestamp::hour(self : IonTimestamp) -> Int? {
+  self.hour
+}
+
+///|
+pub fn IonTimestamp::minute(self : IonTimestamp) -> Int? {
+  self.minute
+}
+
+///|
+pub fn IonTimestamp::second(self : IonTimestamp) -> Int? {
+  self.second
+}
+
+///|
+pub fn IonTimestamp::offset_minutes(self : IonTimestamp) -> Int? {
+  self.offset_minutes
+}
+
+///|
+pub fn IonTimestamp::fraction_exponent(self : IonTimestamp) -> Int? {
+  self.fraction_exponent
+}
+
+///|
+pub fn IonTimestamp::fraction_coefficient(
+  self : IonTimestamp,
+) -> @bigint.BigInt? {
+  self.fraction_coefficient
+}
+
+///|
+pub(all) enum IonValue {
+  Null(IonNull)
+  Bool(Bool)
+  Int(@bigint.BigInt)
+  Float(Float)
+  Decimal(IonDecimal)
+  Timestamp(IonTimestamp)
+  Symbol(IonSymbol)
+  String(String)
+  Blob(Bytes)
+  Clob(Bytes)
+  List(Array[IonValue])
+  Sexp(Array[IonValue])
+  Struct(Array[(IonSymbol, IonValue)])
+  Annotated(Array[IonSymbol], IonValue)
+} derive(Debug, Eq)
+
+///|
+pub fn IonValue::null(kind~ : IonNull) -> IonValue {
+  Null(kind)
+}
+
+///|
+pub fn IonValue::symbol(text~ : String) -> IonValue {
+  Symbol(IonSymbol::from_text(text))
+}
+
+///|
+pub fn IonValue::empty_struct() -> IonValue {
+  Struct([])
+}
+
+///|
+pub fn IonValue::empty_list() -> IonValue {
+  List([])
+}
+
+///|
+pub(all) enum LimitKind {
+  TotalBytes
+  Depth
+  Values
+  ContainerItems
+  TextBytes
+  BlobBytes
+  SymbolCount
+} derive(Debug, Eq)
+
+///|
+pub(all) enum ErrorKind {
+  UnexpectedEof
+  InvalidSyntax
+  InvalidBinary
+  InvalidUtf8
+  InvalidNumber
+  InvalidTimestamp
+  InvalidSymbol
+  InvalidLength
+  UnsupportedVersion
+  LimitExceeded
+} derive(Debug, Eq)
+
+///|
+pub(all) suberror IonError {
+  Parse(
+    kind~ : ErrorKind,
+    offset~ : Int,
+    line~ : Int,
+    column~ : Int,
+    message~ : String
+  )
+  Limit(
+    kind~ : LimitKind,
+    offset~ : Int,
+    line~ : Int,
+    column~ : Int,
+    message~ : String
+  )
+  UnsupportedVersion(major~ : Int, minor~ : Int, offset~ : Int)
+} derive(Debug)
+
+///|
+pub fn IonError::kind(self : IonError) -> ErrorKind {
+  match self {
+    Parse(kind~, ..) => kind
+    Limit(..) => ErrorKind::LimitExceeded
+    UnsupportedVersion(..) => ErrorKind::UnsupportedVersion
+  }
+}
+
+///|
+pub fn IonError::offset(self : IonError) -> Int {
+  match self {
+    Parse(offset~, ..) => offset
+    Limit(offset~, ..) => offset
+    UnsupportedVersion(offset~, ..) => offset
+  }
+}
+
+///|
+pub fn IonError::line(self : IonError) -> Int {
+  match self {
+    Parse(line~, ..) => line
+    Limit(line~, ..) => line
+    UnsupportedVersion(..) => 1
+  }
+}
+
+///|
+pub fn IonError::column(self : IonError) -> Int {
+  match self {
+    Parse(column~, ..) => column
+    Limit(column~, ..) => column
+    UnsupportedVersion(..) => 1
+  }
+}
+
+///|
+pub fn IonError::message(self : IonError) -> String {
+  match self {
+    Parse(message~, ..) => message
+    Limit(message~, ..) => message
+    UnsupportedVersion(major~, minor~, ..) =>
+      "unsupported Ion version \{major}.\{minor}"
+  }
+}
+
+///|
+pub(all) struct Limits {
+  max_depth : Int
+  max_values : Int
+  max_container_items : Int
+  max_text_bytes : Int
+  max_blob_bytes : Int
+  max_total_bytes : Int
+  max_symbols : Int
+} derive(Debug, Eq)
+
+///|
+pub fn Limits::default() -> Limits {
+  {
+    max_depth: 64,
+    max_values: 100000,
+    max_container_items: 100000,
+    max_text_bytes: 16 * 1024 * 1024,
+    max_blob_bytes: 64 * 1024 * 1024,
+    max_total_bytes: 128 * 1024 * 1024,
+    max_symbols: 100000,
+  }
+}
+
+///|
+pub fn Limits::new(
+  max_depth? : Int = 64,
+  max_values? : Int = 100000,
+  max_container_items? : Int = 100000,
+  max_text_bytes? : Int = 16 * 1024 * 1024,
+  max_blob_bytes? : Int = 64 * 1024 * 1024,
+  max_total_bytes? : Int = 128 * 1024 * 1024,
+  max_symbols? : Int = 100000,
+) -> Limits {
+  {
+    max_depth,
+    max_values,
+    max_container_items,
+    max_text_bytes,
+    max_blob_bytes,
+    max_total_bytes,
+    max_symbols,
+  }
+}
+
+///|
+pub fn Limits::max_depth(self : Limits) -> Int {
+  self.max_depth
+}
+
+///|
+pub fn Limits::max_values(self : Limits) -> Int {
+  self.max_values
+}
+
+///|
+pub fn Limits::max_container_items(self : Limits) -> Int {
+  self.max_container_items
+}
+
+///|
+pub fn Limits::max_text_bytes(self : Limits) -> Int {
+  self.max_text_bytes
+}
+
+///|
+pub fn Limits::max_blob_bytes(self : Limits) -> Int {
+  self.max_blob_bytes
+}
+
+///|
+pub fn Limits::max_total_bytes(self : Limits) -> Int {
+  self.max_total_bytes
+}
+
+///|
+pub fn Limits::max_symbols(self : Limits) -> Int {
+  self.max_symbols
+}
+
+///|
+pub(all) struct EncodeOptions {
+  pretty : Bool
+  indent : Int
+  emit_bvm : Bool
+  limits : Limits
+} derive(Debug)
+
+///|
+pub fn EncodeOptions::default() -> EncodeOptions {
+  { pretty: false, indent: 2, emit_bvm: true, limits: Limits::default() }
+}
+
+///|
+pub fn EncodeOptions::new(
+  pretty? : Bool = false,
+  indent? : Int = 2,
+  emit_bvm? : Bool = true,
+  limits? : Limits = Limits::default(),
+) -> EncodeOptions {
+  { pretty, indent, emit_bvm, limits }
+}
+
+///|
+pub fn EncodeOptions::pretty(self : EncodeOptions) -> Bool {
+  self.pretty
+}
+
+///|
+pub fn EncodeOptions::indent(self : EncodeOptions) -> Int {
+  self.indent
+}
+
+///|
+pub fn EncodeOptions::emit_bvm(self : EncodeOptions) -> Bool {
+  self.emit_bvm
+}
+
+///|
+pub fn EncodeOptions::limits(self : EncodeOptions) -> Limits {
+  self.limits
+}
