@@ -1,0 +1,10 @@
+// Rich values used by the local round-trip suite.
+measurement::{
+  id: 7,
+  value: 12.30,
+  at: 2024-01-02T03:04:05.123Z,
+  blob: {{aGk=}},
+  clob: {{"hi"}},
+  expression: (add 1 2),
+  repeated: {a: 1, a: 2},
+}

@@ -1,0 +1,7 @@
+import {
+  "liangqinsheng/ion/encode",
+  "liangqinsheng/ion/format_model" @model,
+  "moonbitlang/core/bigint",
+}
+
+pkgtype(kind: "executable")

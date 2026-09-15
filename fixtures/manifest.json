@@ -1,0 +1,19 @@
+{
+  "format": "Amazon Ion 1.0",
+  "license_note": "Fixtures in this repository are original, minimal interoperability cases.",
+  "valid": [
+    "valid/text-basic.ion",
+    "valid/text-rich.ion",
+    "valid/binary-basic.hex"
+  ],
+  "coverage": [
+    "scalars",
+    "annotations",
+    "ordered structs",
+    "list and sexp",
+    "decimal",
+    "timestamp",
+    "blob and clob",
+    "binary version marker"
+  ]
+}

@@ -1,0 +1,6 @@
+import {
+  "liangqinsheng/ion/decode",
+  "liangqinsheng/ion/encode",
+}
+
+pkgtype(kind: "executable")
