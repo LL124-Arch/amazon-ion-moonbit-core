@@ -121,3 +121,23 @@ test "value model annotation and kind helpers" {
   assert_eq(annotated.annotations().length(), 1)
   assert_eq(annotated.without_annotations(), original)
 }
+
+///|
+test "ordered container access preserves duplicate fields" {
+  let values = @decode.parse_text(
+    "meta::{items: [1, 2], name: \"one\", name: \"two\"}",
+  ) catch {
+    _ => []
+  }
+  let value = values[0]
+  assert_eq(value.fields().length(), 3)
+  assert_eq(value.get_fields("name").length(), 2)
+  match value.get_field("name") {
+    Some(@model.IonValue::String(text)) => assert_eq(text, "one")
+    _ => assert_eq(true, false)
+  }
+  match value.get_field("items") {
+    Some(items) => assert_eq(items.elements().length(), 2)
+    _ => assert_eq(true, false)
+  }
+}
