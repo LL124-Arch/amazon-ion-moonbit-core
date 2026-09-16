@@ -481,6 +481,54 @@ test "nested path queries preserve order and bounds" {
 }
 
 ///|
+test "typed path queries distinguish numeric fields and traverse annotations" {
+  let value = parse_one_text(
+    "audit::{\"0\": [{port: 80}, {port: 443}], service: {ports: (8080)}}",
+  ) catch {
+    _ => @model.IonValue::empty_struct()
+  }
+  let numeric_field_path = [PathSegment::Field("0"), PathSegment::Index(1)]
+  match select_first_typed_path(value, numeric_field_path[:]) {
+    Some(item) =>
+      match item.get_field("port") {
+        Some(port) => assert_eq(port.as_int().unwrap().to_string(), "443")
+        None => fail("expected selected item to retain its struct field")
+      }
+    None => fail("expected numeric field path to select an item")
+  }
+  let nested_path = [
+    PathSegment::Field("service"),
+    PathSegment::Field("ports"),
+    PathSegment::Index(0),
+  ]
+  match select_typed_path(value, nested_path[:]) {
+    [port] => assert_eq(port.as_int().unwrap().to_string(), "8080")
+    _ => fail("expected annotated s-expression path to select one port")
+  }
+  assert_eq(select_typed_path(value, [PathSegment::Index(-1)][:]).length(), 0)
+  assert_eq(
+    select_typed_path(value, [PathSegment::Field("missing")][:]).length(),
+    0,
+  )
+}
+
+///|
+test "typed document paths preserve root and repeated field order" {
+  let document = parse_text("{item: [1, 2], item: [3]} {item: [4]}") catch {
+    _ => []
+  }
+  let path = [PathSegment::Field("item"), PathSegment::Index(0)]
+  let matches = select_document_typed_path(document[:], path[:])
+  assert_eq(matches.length(), 3)
+  assert_eq(matches[0].as_int().unwrap().to_string(), "1")
+  assert_eq(matches[1].as_int().unwrap().to_string(), "3")
+  assert_eq(matches[2].as_int().unwrap().to_string(), "4")
+  let roots = select_document_typed_path(document[:], [][:])
+  assert_eq(roots.length(), 2)
+  assert_eq(roots[0], document[0])
+}
+
+///|
 test "preflight limits and error classification" {
   let values = parse_text("{name: \"ion\", items: [1, 2]}") catch { _ => [] }
   let stats = analyze(values[:])
