@@ -4,6 +4,7 @@ pub fn encode_text(
   options? : @model.EncodeOptions,
 ) -> String raise @model.IonError {
   let options = options.unwrap_or(@model.EncodeOptions::default())
+  options.validate()
   TextWriter::new(options).write_document(values)
 }
 
@@ -13,5 +14,6 @@ pub fn encode_binary(
   options? : @model.EncodeOptions,
 ) -> Bytes raise @model.IonError {
   let options = options.unwrap_or(@model.EncodeOptions::default())
+  options.validate()
   BinaryWriter::new(options).write_document(values)
 }

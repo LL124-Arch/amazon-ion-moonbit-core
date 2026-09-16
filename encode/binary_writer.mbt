@@ -33,7 +33,9 @@ fn BinaryWriter::write_document(
   for value in values {
     self.write_value_to(self.buffer, value)
   }
-  self.buffer.to_bytes()
+  let output = self.buffer.to_bytes()
+  self.options.preflight_output_size(output.length())
+  output
 }
 
 ///|

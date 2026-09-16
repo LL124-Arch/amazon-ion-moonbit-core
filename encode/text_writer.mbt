@@ -24,7 +24,9 @@ fn TextWriter::write_document(
     self.write_value(value)
     first = false
   }
-  self.builder.to_string()
+  let output = self.builder.to_string()
+  self.options.preflight_output_size(@utf8.encode(output).length())
+  output
 }
 
 ///|
@@ -256,7 +258,20 @@ fn TextWriter::write_list(
 ) -> Unit raise @model.IonError {
   self.enter_container()
   self.builder.write_char('[')
-  self.write_sequence(values, ',')
+  if self.options.pretty() && values.length() > 0 {
+    for index, value in values {
+      self.builder.write_char('\n')
+      self.write_indent(self.depth)
+      self.write_value(value)
+      if index + 1 < values.length() {
+        self.builder.write_char(',')
+      }
+    }
+    self.builder.write_char('\n')
+    self.write_indent(self.depth - 1)
+  } else {
+    self.write_sequence(values, ',')
+  }
   self.builder.write_char(']')
   self.leave_container()
 }
@@ -268,13 +283,23 @@ fn TextWriter::write_sexp(
 ) -> Unit raise @model.IonError {
   self.enter_container()
   self.builder.write_char('(')
-  let mut first = true
-  for value in values {
-    if !first {
-      self.builder.write_char(' ')
+  if self.options.pretty() && values.length() > 0 {
+    for value in values {
+      self.builder.write_char('\n')
+      self.write_indent(self.depth)
+      self.write_value(value)
     }
-    self.write_value(value)
-    first = false
+    self.builder.write_char('\n')
+    self.write_indent(self.depth - 1)
+  } else {
+    let mut first = true
+    for value in values {
+      if !first {
+        self.builder.write_char(' ')
+      }
+      self.write_value(value)
+      first = false
+    }
   }
   self.builder.write_char(')')
   self.leave_container()
@@ -287,15 +312,30 @@ fn TextWriter::write_struct(
 ) -> Unit raise @model.IonError {
   self.enter_container()
   self.builder.write_char('{')
-  let mut first = true
-  for field in fields {
-    if !first {
-      self.builder.write_string(", ")
+  if self.options.pretty() && fields.length() > 0 {
+    for index, field in fields {
+      self.builder.write_char('\n')
+      self.write_indent(self.depth)
+      self.write_symbol(field.0)
+      self.builder.write_string(": ")
+      self.write_value(field.1)
+      if index + 1 < fields.length() {
+        self.builder.write_char(',')
+      }
     }
-    self.write_symbol(field.0)
-    self.builder.write_string(": ")
-    self.write_value(field.1)
-    first = false
+    self.builder.write_char('\n')
+    self.write_indent(self.depth - 1)
+  } else {
+    let mut first = true
+    for field in fields {
+      if !first {
+        self.builder.write_string(", ")
+      }
+      self.write_symbol(field.0)
+      self.builder.write_string(": ")
+      self.write_value(field.1)
+      first = false
+    }
   }
   self.builder.write_char('}')
   self.leave_container()
@@ -315,6 +355,15 @@ fn TextWriter::write_sequence(
     }
     self.write_value(value)
     first = false
+  }
+}
+
+///|
+fn TextWriter::write_indent(self : TextWriter, depth : Int) -> Unit {
+  let mut spaces = depth * self.options.indent()
+  while spaces > 0 {
+    self.builder.write_char(' ')
+    spaces -= 1
   }
 }
 
