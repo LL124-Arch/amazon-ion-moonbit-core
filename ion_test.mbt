@@ -241,3 +241,36 @@ test "typed value projections ignore annotations" {
   assert_eq(values[4].as_timestamp() is Some(_), true)
   assert_eq(@model.IonValue::empty_list().as_string(), None)
 }
+
+///|
+test "scalar display helpers preserve Ion meaning" {
+  assert_eq(@model.IonSymbol::from_text("name").display(), "name")
+  assert_eq(@model.IonSymbol::from_sid(12).display(), "$12")
+  assert_eq(@model.IonSymbol::unknown().display(), "$0")
+
+  let values = parse_text("1.20 -3.00 2024-01T 2024-01-02T03:04:05Z") catch {
+    _ => []
+  }
+  match values[0].as_decimal() {
+    Some(decimal) => assert_eq(decimal.to_text(), "1.20")
+    None => assert_eq(true, false)
+  }
+  match values[1].as_decimal() {
+    Some(decimal) => assert_eq(decimal.to_text(), "-3.00")
+    None => assert_eq(true, false)
+  }
+  match values[2].as_timestamp() {
+    Some(timestamp) => {
+      assert_eq(timestamp.precision(), 2)
+      assert_eq(timestamp.has_offset(), false)
+    }
+    None => assert_eq(true, false)
+  }
+  match values[3].as_timestamp() {
+    Some(timestamp) => {
+      assert_eq(timestamp.precision(), 6)
+      assert_eq(timestamp.has_offset(), true)
+    }
+    None => assert_eq(true, false)
+  }
+}

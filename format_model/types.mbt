@@ -370,6 +370,88 @@ pub fn IonValue::as_timestamp(self : IonValue) -> IonTimestamp? {
 }
 
 ///|
+/// Return readable symbol text, or a `$sid` form for an unresolved symbol.
+pub fn IonSymbol::display(self : IonSymbol) -> String {
+  match (self.text, self.sid) {
+    (Some(text), _) => text
+    (None, Some(sid)) => "$\{sid}"
+    _ => "$0"
+  }
+}
+
+///|
+/// Render a decimal without losing its coefficient scale.
+pub fn IonDecimal::to_text(self : IonDecimal) -> String {
+  let coefficient = self.coefficient.to_string()
+  let negative = coefficient.has_prefix("-")
+  let digits = if negative {
+    coefficient.sub(start=1).to_owned()
+  } else {
+    coefficient
+  }
+  let exponent = self.exponent
+  let builder = StringBuilder::new()
+  if negative {
+    builder.write_char('-')
+  }
+  if exponent >= 0 {
+    builder.write_string(digits)
+    for _ in 0..<exponent {
+      builder.write_char('0')
+    }
+  } else {
+    let places = -exponent
+    if digits.length() > places {
+      builder.write_stringview(
+        digits.sub(start=0, end=digits.length() - places),
+      )
+      builder.write_char('.')
+      builder.write_stringview(
+        digits.sub(start=digits.length() - places, end=digits.length()),
+      )
+    } else {
+      builder.write_string("0.")
+      for _ in 0..<(places - digits.length()) {
+        builder.write_char('0')
+      }
+      builder.write_string(digits)
+    }
+  }
+  builder.to_string()
+}
+
+///|
+/// Return the timestamp precision from year-only through fractional seconds.
+pub fn IonTimestamp::precision(self : IonTimestamp) -> Int {
+  let mut result = 1
+  if self.month is Some(_) {
+    result += 1
+  }
+  if self.day is Some(_) {
+    result += 1
+  }
+  if self.hour is Some(_) {
+    result += 1
+  }
+  if self.minute is Some(_) {
+    result += 1
+  }
+  if self.second is Some(_) {
+    result += 1
+  }
+  if self.fraction_exponent is Some(_) && self.fraction_coefficient is Some(_) {
+    result += 1
+  }
+  result
+}
+
+///|
+/// Report whether the timestamp carries a known or unknown local offset.
+pub fn IonTimestamp::has_offset(self : IonTimestamp) -> Bool {
+  self.offset_minutes is Some(_)
+}
+
+///|
 pub(all) enum LimitKind {
   TotalBytes
   Depth
