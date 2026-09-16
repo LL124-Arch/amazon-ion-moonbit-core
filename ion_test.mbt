@@ -556,6 +556,93 @@ test "preflight limits and error classification" {
 }
 
 ///|
+test "write preflight reports measured resource limits without flattening errors" {
+  let nested = @model.IonValue::List([
+    @model.IonValue::List([@model.IonValue::string("ion")]),
+  ])
+  let nested_stats = analyze([nested][:])
+  assert_eq(nested_stats.max_depth(), 3)
+  assert_eq(nested_stats.max_container_items(), 1)
+  assert_eq(
+    nested_stats.first_exceeded_limit(@model.Limits::new(max_depth=2)),
+    Some(@model.LimitKind::Depth),
+  )
+  let depth_error = try
+    preflight_values([nested][:], limits=@model.Limits::new(max_depth=2))
+  catch {
+    error => error
+  } noraise {
+    _ => fail("expected nesting preflight error")
+  }
+  assert_eq(depth_error.limit_kind(), Some(@model.LimitKind::Depth))
+
+  let values_error = try
+    preflight_values(
+      [@model.IonValue::bool(true), @model.IonValue::bool(false)][:],
+      limits=@model.Limits::new(max_values=1),
+    )
+  catch {
+    error => error
+  } noraise {
+    _ => fail("expected value-count preflight error")
+  }
+  assert_eq(values_error.limit_kind(), Some(@model.LimitKind::Values))
+
+  let text_error = try
+    preflight_values(
+      [@model.IonValue::string("toolong")][:],
+      limits=@model.Limits::new(max_text_bytes=3),
+    )
+  catch {
+    error => error
+  } noraise {
+    _ => fail("expected text preflight error")
+  }
+  assert_eq(text_error.limit_kind(), Some(@model.LimitKind::TextBytes))
+
+  let blob_error = try
+    preflight_values(
+      [@model.IonValue::Blob(b"1234")][:],
+      limits=@model.Limits::new(max_blob_bytes=3),
+    )
+  catch {
+    error => error
+  } noraise {
+    _ => fail("expected binary payload preflight error")
+  }
+  assert_eq(blob_error.limit_kind(), Some(@model.LimitKind::BlobBytes))
+
+  let container_error = try
+    preflight_values(
+      [
+        @model.IonValue::List([
+          @model.IonValue::bool(true),
+          @model.IonValue::bool(false),
+        ]),
+      ][:],
+      limits=@model.Limits::new(max_container_items=1),
+    )
+  catch {
+    error => error
+  } noraise {
+    _ => fail("expected container preflight error")
+  }
+  assert_eq(
+    container_error.limit_kind(),
+    Some(@model.LimitKind::ContainerItems),
+  )
+
+  let syntax_error = try parse_text("{answer: }") catch {
+    error => error
+  } noraise {
+    _ => fail("expected syntax error")
+  }
+  assert_eq(syntax_error.is_limit(), false)
+  assert_eq(syntax_error.limit_kind(), None)
+  assert_eq(syntax_error.location().format(), "1:10 (offset 9)")
+}
+
+///|
 test "struct editing preserves duplicates, order, annotations, and source" {
   let original = parse_one_text(
     "record::{first: 1, duplicate: 2, duplicate: 3}",
