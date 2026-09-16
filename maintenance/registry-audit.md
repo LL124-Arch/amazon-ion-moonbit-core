@@ -1,6 +1,6 @@
 # Mooncakes overlap record
 
-记录日期：2026-09-15  
+记录日期：2026-09-16
 记录对象：Mooncakes.io 的公开搜索结果  
 数据来源：[mooncakes.io 源码](https://github.com/moonbitlang/mooncakes.io) 中公开的 `GET /api/v0/search?kw=...&limit=20` 接口。
 
@@ -13,6 +13,11 @@
 - 邻近项目：处理上层业务或相关格式，但不直接替代本库。
 
 查询词族包含格式全称、扩展名、MIME、常见实现名、parser、decoder、encoder、serializer 和 GitHub 仓库名。搜索摘要没有稳定提供版本、更新时间或下载量；缺失字段统一记为“搜索接口未提供”，不作推测。
+
+本次复核直接请求公开搜索接口，对 `amazon ion`、`ion`、`.ion`、
+`application/ion`、`ion parser`、`ion decoder`、`ion encoder` 和
+`amazon-ion-moonbit-core` 分别查询，返回结果均为空；这只说明当前快照未
+发现命中包，不替代发布前对候选项目 README、源码和许可证的人工复核。
 
 ## 本次快照
 

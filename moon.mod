@@ -1,10 +1,10 @@
-name = "liangqinsheng/ion"
+name = "LL124-Arch/amazon-ion-moonbit-core"
 
 version = "0.1.0"
 
 readme = "README.md"
 
-repository = ""
+repository = "https://github.com/LL124-Arch/amazon-ion-moonbit-core"
 
 license = "Apache-2.0"
 

@@ -484,7 +484,7 @@ test "diagnostics expose stable error locations and text binary equivalence" {
   } noraise {
     _ => fail("expected invalid text")
   }
-  assert_eq(syntax_error.location(), { offset: 9, line: 1, column: 10 })
+  assert_eq(syntax_error.location(), { offset: 9, line: 1, column: 10, })
   assert_eq(
     syntax_error.summary(),
     "invalid_syntax: expected an Ion value at 1:10 (offset 9)",

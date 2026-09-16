@@ -11,7 +11,7 @@ priv struct TextParser {
 
 ///|
 fn TextParser::new(input : Bytes, limits : @model.Limits) -> TextParser {
-  { input, pos: 0, line: 1, column: 1, limits, values: 0, depth: 0 }
+  { input, pos: 0, line: 1, column: 1, limits, values: 0, depth: 0, }
 }
 
 ///|

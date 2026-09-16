@@ -18,14 +18,24 @@ jobs:
       - name: Toolchain version
         run: moon version --all
       - name: Format
-        run: |
-          moon fmt
-          git diff --exit-code
+        run: moon fmt --check
       - name: Check
         run: moon check
       - name: Test
         run: moon test
+      - name: Target test matrix
+        run: |
+          moon test --target native
+          moon test --target wasm
+          moon test --target wasm-gc
+          moon test --target js
       - name: Stable target builds
         run: |
+          moon build --target native
           moon build --target wasm
           moon build --target js
+      - name: Official Ion differential check
+        working-directory: roundtrip_lab
+        run: |
+          npm ci
+          node ion-js-diff.mjs

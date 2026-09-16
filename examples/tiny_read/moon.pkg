@@ -1,6 +1,6 @@
 import {
-  "liangqinsheng/ion/decode",
-  "liangqinsheng/ion/encode",
+  "LL124-Arch/amazon-ion-moonbit-core/decode",
+  "LL124-Arch/amazon-ion-moonbit-core/encode",
 }
 
 pkgtype(kind: "executable")

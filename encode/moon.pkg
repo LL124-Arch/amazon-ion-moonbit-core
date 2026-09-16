@@ -1,5 +1,5 @@
 import {
-  "liangqinsheng/ion/format_model" @model,
+  "LL124-Arch/amazon-ion-moonbit-core/format_model" @model,
   "moonbitlang/core/bigint",
   "moonbitlang/core/buffer",
   "moonbitlang/core/encoding/utf8",

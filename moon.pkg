@@ -1,7 +1,7 @@
 import {
-  "liangqinsheng/ion/decode",
-  "liangqinsheng/ion/encode",
-  "liangqinsheng/ion/format_model" @model,
+  "LL124-Arch/amazon-ion-moonbit-core/decode",
+  "LL124-Arch/amazon-ion-moonbit-core/encode",
+  "LL124-Arch/amazon-ion-moonbit-core/format_model" @model,
   "moonbitlang/core/string",
   "moonbitlang/core/encoding/utf8",
 }
