@@ -33,6 +33,69 @@ test "binary scalar fixture" {
 }
 
 ///|
+test "output option factories control readable text and binary markers" {
+  let values = parse_text("{name: [1, 2]}")
+  let compact = @model.EncodeOptions::compact()
+  assert_eq(encode_text(values[:], options=compact), "{name: [1, 2]}")
+
+  let readable = @model.EncodeOptions::readable(indent=4)
+  assert_eq(
+    encode_text(values[:], options=readable),
+    "{\n    name: [\n        1,\n        2\n    ]\n}",
+  )
+
+  let without_bvm = compact.with_binary_version_marker(enabled=false)
+  let binary = encode_binary(values[:], options=without_bvm)
+  assert_eq(binary[0] == 0xE0 && binary[1] == 0x01, false)
+  assert_eq(binary_version(binary), None)
+}
+
+///|
+test "output options reject invalid indentation and predicted size" {
+  let invalid_indent = try @model.EncodeOptions::readable(indent=0) catch {
+    error => error
+  } noraise {
+    _ => fail("expected invalid indentation")
+  }
+  assert_eq(invalid_indent.kind(), @model.ErrorKind::InvalidLength)
+
+  let invalid_legacy = @model.EncodeOptions::new(indent=17)
+  let encode_error = try encode_text([], options=invalid_legacy) catch {
+    error => error
+  } noraise {
+    _ => fail("expected invalid indentation")
+  }
+  assert_eq(encode_error.kind(), @model.ErrorKind::InvalidLength)
+
+  let constrained = @model.EncodeOptions::compact(
+    limits=@model.Limits::new(max_total_bytes=3),
+  )
+  let preflight_error = try constrained.preflight_output_size(4) catch {
+    error => error
+  } noraise {
+    _ => fail("expected output limit")
+  }
+  assert_eq(preflight_error.is_limit(), true)
+
+  let values = parse_text("{name: 1}")
+  let output_error = try encode_text(values[:], options=constrained) catch {
+    error => error
+  } noraise {
+    _ => fail("expected output limit")
+  }
+  assert_eq(output_error.is_limit(), true)
+
+  let binary_output_error = try
+    encode_binary(values[:], options=constrained)
+  catch {
+    error => error
+  } noraise {
+    _ => fail("expected output limit")
+  }
+  assert_eq(binary_output_error.is_limit(), true)
+}
+
+///|
 test "malformed binary is rejected" {
   let decoded = @decode.parse_binary(b"\xE0\x01\x00\xEA\x82a") catch { _ => [] }
   assert_eq(decoded.length(), 0)

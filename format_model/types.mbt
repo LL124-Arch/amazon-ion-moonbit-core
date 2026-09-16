@@ -654,6 +654,72 @@ pub fn EncodeOptions::new(
 }
 
 ///|
+/// Construct compact text output options with a configurable binary version marker.
+pub fn EncodeOptions::compact(
+  emit_bvm? : Bool = true,
+  limits? : Limits = Limits::default(),
+) -> EncodeOptions {
+  { pretty: false, indent: 2, emit_bvm, limits }
+}
+
+///|
+/// Construct readable text output options after validating the indentation width.
+pub fn EncodeOptions::readable(
+  indent? : Int = 2,
+  emit_bvm? : Bool = true,
+  limits? : Limits = Limits::default(),
+) -> EncodeOptions raise IonError {
+  let options = { pretty: true, indent, emit_bvm, limits }
+  options.validate()
+  options
+}
+
+///|
+/// Return these options with binary version-marker emission enabled or disabled.
+pub fn EncodeOptions::with_binary_version_marker(
+  self : EncodeOptions,
+  enabled~ : Bool,
+) -> EncodeOptions {
+  {
+    pretty: self.pretty,
+    indent: self.indent,
+    emit_bvm: enabled,
+    limits: self.limits,
+  }
+}
+
+///|
+/// Validate options that affect portable text output.
+///
+/// Readable output accepts indentation widths from one through sixteen spaces.
+pub fn EncodeOptions::validate(self : EncodeOptions) -> Unit raise IonError {
+  if self.indent < 1 || self.indent > 16 {
+    raise invalid_encode_option("indent must be between 1 and 16 spaces")
+  }
+}
+
+///|
+/// Reject a predicted encoded size that exceeds the configured output limit.
+pub fn EncodeOptions::preflight_output_size(
+  self : EncodeOptions,
+  estimated_bytes : Int,
+) -> Unit raise IonError {
+  self.validate()
+  if estimated_bytes < 0 {
+    raise invalid_encode_option("estimated output size cannot be negative")
+  }
+  if estimated_bytes > self.limits.max_total_bytes {
+    raise IonError::Limit(
+      kind=LimitKind::TotalBytes,
+      offset=0,
+      line=1,
+      column=1,
+      message="estimated output exceeds configured total byte limit",
+    )
+  }
+}
+
+///|
 pub fn EncodeOptions::pretty(self : EncodeOptions) -> Bool {
   self.pretty
 }
@@ -671,4 +737,15 @@ pub fn EncodeOptions::emit_bvm(self : EncodeOptions) -> Bool {
 ///|
 pub fn EncodeOptions::limits(self : EncodeOptions) -> Limits {
   self.limits
+}
+
+///|
+fn invalid_encode_option(message : String) -> IonError {
+  IonError::Parse(
+    kind=ErrorKind::InvalidLength,
+    offset=0,
+    line=1,
+    column=1,
+    message~,
+  )
 }
