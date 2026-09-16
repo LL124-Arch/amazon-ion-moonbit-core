@@ -410,6 +410,12 @@ pub fn IonSymbol::display(self : IonSymbol) -> String {
 }
 
 ///|
+/// Report whether this symbol has text resolved from its symbol table.
+pub fn IonSymbol::is_resolved(self : IonSymbol) -> Bool {
+  self.text is Some(_)
+}
+
+///|
 /// Render a decimal without losing its coefficient scale.
 pub fn IonDecimal::to_text(self : IonDecimal) -> String {
   let coefficient = self.coefficient.to_string()
@@ -451,6 +457,12 @@ pub fn IonDecimal::to_text(self : IonDecimal) -> String {
 }
 
 ///|
+/// Render a decimal as an Ion decimal literal while retaining its exact exponent.
+pub fn IonDecimal::to_ion_text(self : IonDecimal) -> String {
+  "\{self.coefficient.to_string()}d\{self.exponent}"
+}
+
+///|
 /// Return the timestamp precision from year-only through fractional seconds.
 pub fn IonTimestamp::precision(self : IonTimestamp) -> Int {
   let mut result = 1
@@ -479,6 +491,35 @@ pub fn IonTimestamp::precision(self : IonTimestamp) -> Int {
 /// Report whether the timestamp carries a known or unknown local offset.
 pub fn IonTimestamp::has_offset(self : IonTimestamp) -> Bool {
   self.offset_minutes is Some(_)
+}
+
+///|
+/// Report whether the timestamp includes an hour and minute time component.
+pub fn IonTimestamp::has_time(self : IonTimestamp) -> Bool {
+  self.hour is Some(_) && self.minute is Some(_)
+}
+
+///|
+/// Render the timestamp offset as `Z`, a signed offset, or `-00:00` when unknown.
+pub fn IonTimestamp::offset_text(self : IonTimestamp) -> String {
+  match self.offset_minutes {
+    None => "-00:00"
+    Some(0) => "Z"
+    Some(value) => {
+      let sign = if value < 0 { "-" } else { "+" }
+      let absolute = if value < 0 { -value } else { value }
+      "\{sign}\{offset_component(absolute / 60)}:\{offset_component(absolute % 60)}"
+    }
+  }
+}
+
+///|
+fn offset_component(value : Int) -> String {
+  if value < 10 {
+    "0\{value}"
+  } else {
+    value.to_string()
+  }
 }
 
 ///|

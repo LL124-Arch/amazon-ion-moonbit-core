@@ -363,8 +363,24 @@ test "scalar constructors retain payloads and reject type mismatches" {
 ///|
 test "scalar display helpers preserve Ion meaning" {
   assert_eq(@model.IonSymbol::from_text("name").display(), "name")
+  assert_eq(@model.IonSymbol::from_text("name").is_resolved(), true)
   assert_eq(@model.IonSymbol::from_sid(12).display(), "$12")
+  assert_eq(@model.IonSymbol::from_sid(12).is_resolved(), false)
   assert_eq(@model.IonSymbol::unknown().display(), "$0")
+  assert_eq(@model.IonSymbol::unknown().is_resolved(), false)
+
+  let negative_decimal = @model.IonDecimal::new(
+    coefficient=@bigint.BigInt::from_string("-300"),
+    exponent=-2,
+  )
+  assert_eq(negative_decimal.to_text(), "-3.00")
+  assert_eq(negative_decimal.to_ion_text(), "-300d-2")
+  let zero_decimal = @model.IonDecimal::new(
+    coefficient=@bigint.BigInt::from_int(0),
+    exponent=-3,
+  )
+  assert_eq(zero_decimal.to_text(), "0.000")
+  assert_eq(zero_decimal.to_ion_text(), "0d-3")
 
   let values = parse_text("1.20 -3.00 2024-01T 2024-01-02T03:04:05Z") catch {
     _ => []
@@ -381,6 +397,8 @@ test "scalar display helpers preserve Ion meaning" {
     Some(timestamp) => {
       assert_eq(timestamp.precision(), 2)
       assert_eq(timestamp.has_offset(), false)
+      assert_eq(timestamp.has_time(), false)
+      assert_eq(timestamp.offset_text(), "-00:00")
     }
     None => assert_eq(true, false)
   }
@@ -388,9 +406,50 @@ test "scalar display helpers preserve Ion meaning" {
     Some(timestamp) => {
       assert_eq(timestamp.precision(), 6)
       assert_eq(timestamp.has_offset(), true)
+      assert_eq(timestamp.has_time(), true)
+      assert_eq(timestamp.offset_text(), "Z")
     }
     None => assert_eq(true, false)
   }
+}
+
+///|
+test "scalar helper output aligns with writer and parser errors" {
+  let offset_time = parse_one_text("2024-01-02T03:04+05:30")
+  match offset_time.as_timestamp() {
+    Some(timestamp) => {
+      assert_eq(timestamp.has_time(), true)
+      assert_eq(timestamp.offset_text(), "+05:30")
+    }
+    None => assert_eq(true, false)
+  }
+  assert_eq(encode_value_text(offset_time), "2024-01-02T03:04+05:30")
+
+  let unknown_offset_time = parse_one_text("2024-01-02T03:04-00:00")
+  match unknown_offset_time.as_timestamp() {
+    Some(timestamp) => assert_eq(timestamp.offset_text(), "-00:00")
+    None => assert_eq(true, false)
+  }
+  assert_eq(encode_value_text(unknown_offset_time), "2024-01-02T03:04-00:00")
+
+  assert_eq(
+    encode_value_text(
+      @model.IonValue::decimal(
+        @model.IonDecimal::new(
+          coefficient=@bigint.BigInt::from_string("-300"),
+          exponent=-2,
+        ),
+      ),
+    ),
+    "-300d-2",
+  )
+
+  let error = try parse_one_text("1d+") catch {
+    error => error
+  } noraise {
+    _ => fail("expected malformed decimal")
+  }
+  assert_eq(error.kind(), @model.ErrorKind::InvalidSyntax)
 }
 
 ///|

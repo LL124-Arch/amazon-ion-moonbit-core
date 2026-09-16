@@ -102,9 +102,7 @@ fn TextWriter::write_decimal(
   self : TextWriter,
   value : @model.IonDecimal,
 ) -> Unit {
-  self.builder.write_string(value.coefficient().to_string())
-  self.builder.write_string("d")
-  self.builder.write_string(value.exponent().to_string())
+  self.builder.write_string(value.to_ion_text())
 }
 
 ///|
@@ -151,7 +149,7 @@ fn TextWriter::write_timestamp(
             }
             None => ()
           }
-          self.write_offset(value.offset_minutes())
+          self.write_offset(value)
         }
         None => ()
       }
@@ -161,19 +159,11 @@ fn TextWriter::write_timestamp(
 }
 
 ///|
-fn TextWriter::write_offset(self : TextWriter, offset : Int?) -> Unit {
-  match offset {
-    None => self.builder.write_string("-00:00")
-    Some(0) => self.builder.write_string("Z")
-    Some(value) => {
-      let sign = if value < 0 { "-" } else { "+" }
-      let absolute = if value < 0 { -value } else { value }
-      self.builder.write_string(sign)
-      self.builder.write_string(pad_number(absolute / 60, 2))
-      self.builder.write_string(":")
-      self.builder.write_string(pad_number(absolute % 60, 2))
-    }
-  }
+fn TextWriter::write_offset(
+  self : TextWriter,
+  timestamp : @model.IonTimestamp,
+) -> Unit {
+  self.builder.write_string(timestamp.offset_text())
 }
 
 ///|
@@ -418,14 +408,14 @@ fn pad_number(value : Int, width : Int) -> String {
   if text.length() >= width {
     text
   } else if width == 2 && text.length() == 1 {
-    "0{text}"
+    "0\{text}"
   } else if width == 4 {
     if text.length() == 1 {
-      "000{text}"
+      "000\{text}"
     } else if text.length() == 2 {
-      "00{text}"
+      "00\{text}"
     } else {
-      "0{text}"
+      "0\{text}"
     }
   } else {
     text
