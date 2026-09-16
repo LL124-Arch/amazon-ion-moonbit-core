@@ -329,3 +329,56 @@ test "preflight limits and error classification" {
   )
   assert_eq(parse_error.is_limit(), false)
 }
+
+///|
+test "struct editing preserves duplicates, order, annotations, and source" {
+  let original = parse_one_text(
+    "record::{first: 1, duplicate: 2, duplicate: 3}",
+  )
+  let appended = struct_append_field(
+    original,
+    "last",
+    @model.IonValue::symbol(text="tail"),
+  ).unwrap()
+  let updated = struct_replace_field(
+    appended,
+    "duplicate",
+    1,
+    @model.IonValue::symbol(text="changed"),
+  ).unwrap()
+  let removed = struct_remove_field(updated, "duplicate", 0).unwrap()
+
+  assert_eq(
+    encode_value_text(removed),
+    "record::{first: 1, duplicate: changed, last: tail}",
+  )
+  assert_eq(
+    encode_value_text(original),
+    "record::{first: 1, duplicate: 2, duplicate: 3}",
+  )
+}
+
+///|
+test "list editing creates independent annotated values" {
+  let original = parse_one_text("numbers::[1, 2]")
+  let appended = list_append(original, @model.IonValue::symbol(text="three")).unwrap()
+  let replaced = list_replace(appended, 1, @model.IonValue::symbol(text="two")).unwrap()
+
+  assert_eq(encode_value_text(replaced), "numbers::[1, two, three]")
+  assert_eq(encode_value_text(original), "numbers::[1, 2]")
+}
+
+///|
+test "structure editing rejects missing fields, wrong types, and invalid indexes" {
+  let record = parse_one_text("{a: 1, a: 2}")
+  let list = parse_one_text("[]")
+  let scalar = parse_one_text("true")
+
+  assert_eq(struct_replace_field(record, "a", 2, scalar), None)
+  assert_eq(struct_remove_field(record, "missing", 0), None)
+  assert_eq(struct_remove_field(record, "a", -1), None)
+  assert_eq(struct_append_field(scalar, "a", record), None)
+  assert_eq(list_replace(list, 0, scalar), None)
+  assert_eq(list_replace(list, -1, scalar), None)
+  assert_eq(list_append(scalar, record), None)
+}
