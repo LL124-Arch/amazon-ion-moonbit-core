@@ -8,7 +8,7 @@ priv struct TextWriter {
 
 ///|
 fn TextWriter::new(options : @model.EncodeOptions) -> TextWriter {
-  { builder: StringBuilder::new(), options, values: 0, depth: 0, }
+  { builder: StringBuilder::new(), options, values: 0, depth: 0 }
 }
 
 ///|

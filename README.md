@@ -40,6 +40,26 @@ let text = @ion.encode_text(decoded[:])
 
 模块标识为 `LL124-Arch/amazon-ion-moonbit-core`，与公开 GitHub 仓库和计划中的 Mooncakes 包名保持一致。
 
+## 安全标量访问
+
+`format_model` 提供 `IonValue::string`、`bool`、`int`、`decimal` 和 `timestamp` 构造函数，以及对应的 `as_*` 投影。投影会忽略值外层的 Ion annotation；类型不匹配（也包括 typed null）返回 `None`，不会将值强制转换。整数始终以 `BigInt` 保存，decimal 的 coefficient/exponent 和 timestamp 的精度、时区偏移及小数秒均原样保留。
+
+```moonbit
+import {
+  "LL124-Arch/amazon-ion-moonbit-core/format_model" @ion,
+  "moonbitlang/core/bigint",
+}
+
+let value = @ion.IonValue::int(
+  @bigint.BigInt::from_string("123456789012345678901234567890"),
+).with_annotations([@ion.IonSymbol::from_text("id")])
+
+match value.as_int() {
+  Some(identifier) => println(identifier.to_string())
+  None => println("expected an Ion int")
+}
+```
+
 ## 文档序列处理
 
 根包还提供面向完整、有界文档的序列操作：`slice_values` 选择零基范围，`filter_values_by_kind` 按 Ion 类型筛选，`merge_documents` 按输入顺序合并多个文档并检查配置的值、深度、符号、载荷和容器限制。`reencode_text_range` 与 `reencode_binary_range` 则复用解析器和写出器来选择一段文档值并生成新的完整文档；二进制输出的版本标记由输出选项控制。它们不是流式 API。

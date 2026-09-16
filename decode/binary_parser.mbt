@@ -22,7 +22,7 @@ fn BinaryParser::new(data : Bytes, limits : @model.Limits) -> BinaryParser {
     Some("max_id"),
     Some("$ion_shared_symbol_table"),
   ]
-  { data, pos: 0, limits, values: 0, depth: 0, symbols, }
+  { data, pos: 0, limits, values: 0, depth: 0, symbols }
 }
 
 ///|
