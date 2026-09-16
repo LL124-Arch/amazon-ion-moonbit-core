@@ -221,3 +221,23 @@ test "document analysis counts nested payloads" {
   assert_eq(stats.symbol_count(), 4)
   assert_eq(stats.payload_bytes(), 22)
 }
+
+///|
+test "typed value projections ignore annotations" {
+  let values = parse_text(
+    "tag::\"ion\" tag::true tag::12345678901234567890 tag::1.20 tag::2024-01T",
+  ) catch {
+    _ => []
+  }
+  assert_eq(values.length(), 5)
+  assert_eq(values[0].as_string(), Some("ion"))
+  assert_eq(values[0].as_bool(), None)
+  assert_eq(values[1].as_bool(), Some(true))
+  match values[2].as_int() {
+    Some(number) => assert_eq(number.to_string(), "12345678901234567890")
+    None => assert_eq(true, false)
+  }
+  assert_eq(values[3].as_decimal() is Some(_), true)
+  assert_eq(values[4].as_timestamp() is Some(_), true)
+  assert_eq(@model.IonValue::empty_list().as_string(), None)
+}
