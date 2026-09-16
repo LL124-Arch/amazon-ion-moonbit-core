@@ -325,6 +325,51 @@ pub fn IonValue::get_fields(self : IonValue, name : String) -> Array[IonValue] {
 }
 
 ///|
+/// Return the underlying string when the value is a string.
+pub fn IonValue::as_string(self : IonValue) -> String? {
+  match self.without_annotations() {
+    String(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+/// Return the underlying boolean when the value is a boolean.
+pub fn IonValue::as_bool(self : IonValue) -> Bool? {
+  match self.without_annotations() {
+    Bool(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+/// Return the arbitrary-precision integer when the value is an integer.
+pub fn IonValue::as_int(self : IonValue) -> @bigint.BigInt? {
+  match self.without_annotations() {
+    Int(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+/// Return the decimal payload when the value is a decimal.
+pub fn IonValue::as_decimal(self : IonValue) -> IonDecimal? {
+  match self.without_annotations() {
+    Decimal(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+/// Return the timestamp payload when the value is a timestamp.
+pub fn IonValue::as_timestamp(self : IonValue) -> IonTimestamp? {
+  match self.without_annotations() {
+    Timestamp(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
 pub(all) enum LimitKind {
   TotalBytes
   Depth
