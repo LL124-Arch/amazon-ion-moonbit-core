@@ -42,6 +42,10 @@ let text = @ion.encode_text(decoded[:])
 
 根包还提供面向完整、有界文档的序列操作：`slice_values` 选择零基范围，`filter_values_by_kind` 按 Ion 类型筛选，`merge_documents` 按输入顺序合并多个文档并检查配置的值、深度、符号、载荷和容器限制。`reencode_text_range` 与 `reencode_binary_range` 则复用解析器和写出器来选择一段文档值并生成新的完整文档；二进制输出的版本标记由输出选项控制。它们不是流式 API。
 
+## 互操作诊断
+
+`encode_hex` 和 `decode_hex` 提供稳定的小写十六进制转换；解码器允许 ASCII 空白与 `#` 行注释，因而可以直接读取仓库中的可审查二进制 fixture。`decode_hex` 会拒绝非十六进制字符和不完整字节对。`IonError::location()` 将错误的偏移、行和列封装为 `IonLocation`，`IonError::summary()` 则提供适合日志的稳定摘要。需要核对同一文档的两种表示时，`diagnose_text_binary` 返回两端的顶层值数量和精确匹配结果；比较不会重排字段、丢弃重复字段、注解或未解析 symbol SID。
+
 ## 验证与样例
 
 仓库中的 `fixtures/valid` 保存文本样例和最小二进制样例；`ion_test.mbt` 覆盖空容器、嵌套值、注解、重复字段、符号表、decimal、timestamp、blob/clob、截断输入和资源限制。

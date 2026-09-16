@@ -445,3 +445,59 @@ test "structure editing rejects missing fields, wrong types, and invalid indexes
   assert_eq(list_replace(list, -1, scalar), None)
   assert_eq(list_append(scalar, record), None)
 }
+
+///|
+test "hex fixture helpers are stable and reject malformed input" {
+  let fixture = "# version marker and three scalar values\nE0 01 00 EA 21 01 11 83 69 6F 6E"
+  let bytes = decode_hex(fixture)
+  assert_eq(bytes, b"\xE0\x01\x00\xEA\x21\x01\x11\x83ion")
+  assert_eq(encode_hex(bytes), "e00100ea21011183696f6e")
+  assert_eq(parse_binary(bytes).length(), 3)
+
+  let invalid = try decode_hex("E0 0G") catch {
+    error => error
+  } noraise {
+    _ => fail("expected invalid hexadecimal")
+  }
+  assert_eq(invalid.kind(), @model.ErrorKind::InvalidSyntax)
+  assert_eq(invalid.location().offset, 4)
+
+  let truncated = try decode_hex("E0 0") catch {
+    error => error
+  } noraise {
+    _ => fail("expected truncated hexadecimal")
+  }
+  assert_eq(truncated.kind(), @model.ErrorKind::InvalidLength)
+
+  let binary_error = try parse_binary(decode_hex("E0 01 00 EA 82 61")) catch {
+    error => error
+  } noraise {
+    _ => fail("expected truncated binary")
+  }
+  assert_eq(binary_error.kind(), @model.ErrorKind::UnexpectedEof)
+}
+
+///|
+test "diagnostics expose stable error locations and text binary equivalence" {
+  let syntax_error = try parse_text("{answer: }") catch {
+    error => error
+  } noraise {
+    _ => fail("expected invalid text")
+  }
+  assert_eq(syntax_error.location(), { offset: 9, line: 1, column: 10 })
+  assert_eq(
+    syntax_error.summary(),
+    "invalid_syntax: expected an Ion value at 1:10 (offset 9)",
+  )
+
+  let text = "$777::{first: $778, duplicate: 1, duplicate: bar}"
+  let values = parse_text(text)
+  let binary = encode_binary(values[:])
+  let report = diagnose_text_binary(text, binary)
+  assert_eq(report.text_value_count(), 1)
+  assert_eq(report.binary_value_count(), 1)
+  assert_eq(report.matches(), true)
+
+  let mismatch = diagnose_text_binary("1", encode_binary(parse_text("2")[:]))
+  assert_eq(mismatch.matches(), false)
+}

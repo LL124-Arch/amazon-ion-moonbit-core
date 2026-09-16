@@ -1,0 +1,2 @@
+# `G` is not a hexadecimal digit and must be rejected by decode_hex.
+E0 0G

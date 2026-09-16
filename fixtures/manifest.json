@@ -6,6 +6,10 @@
     "valid/text-rich.ion",
     "valid/binary-basic.hex"
   ],
+  "invalid": [
+    "invalid/truncated-binary.hex",
+    "invalid/malformed-hex.txt"
+  ],
   "coverage": [
     "scalars",
     "annotations",
@@ -14,6 +18,9 @@
     "decimal",
     "timestamp",
     "blob and clob",
-    "binary version marker"
+    "binary version marker",
+    "hex fixture comments",
+    "truncated binary",
+    "malformed hex"
   ]
 }
