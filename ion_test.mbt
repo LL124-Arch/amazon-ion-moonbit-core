@@ -274,3 +274,31 @@ test "scalar display helpers preserve Ion meaning" {
     None => assert_eq(true, false)
   }
 }
+
+///|
+test "nested path queries preserve order and bounds" {
+  let value = parse_one_text(
+    "{service: {ports: [80, 443], tags: [\"edge\"]}, service: {ports: [8080]}}",
+  ) catch {
+    _ => @model.IonValue::empty_struct()
+  }
+  assert_eq(select_field(value, "service").length(), 2)
+  assert_eq(select_index(value, 0) is Some(_), false)
+  let path = ["service", "ports", "1"]
+  let matches = select_path(value, path[:])
+  assert_eq(matches.length(), 1)
+  match matches[0].as_int() {
+    Some(number) => assert_eq(number.to_string(), "443")
+    None => assert_eq(true, false)
+  }
+  match select_first_path(value, ["service", "ports", "0"][:]) {
+    Some(number) =>
+      match number.as_int() {
+        Some(number) => assert_eq(number.to_string(), "80")
+        None => assert_eq(true, false)
+      }
+    None => assert_eq(true, false)
+  }
+  assert_eq(select_path(value, ["service", "missing"][:]).length(), 0)
+  assert_eq(select_index(value.get_field("service").unwrap(), -1), None)
+}
