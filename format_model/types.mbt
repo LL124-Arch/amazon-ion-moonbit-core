@@ -542,6 +542,15 @@ pub fn IonError::message(self : IonError) -> String {
 }
 
 ///|
+/// Report whether this error was raised by a configured resource limit.
+pub fn IonError::is_limit(self : IonError) -> Bool {
+  match self {
+    Limit(..) => true
+    _ => false
+  }
+}
+
+///|
 pub(all) struct Limits {
   max_depth : Int
   max_values : Int
