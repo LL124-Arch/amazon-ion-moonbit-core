@@ -306,6 +306,61 @@ test "typed value projections ignore annotations" {
 }
 
 ///|
+test "scalar constructors retain payloads and reject type mismatches" {
+  let huge_integer = @bigint.BigInt::from_string(
+    "123456789012345678901234567890",
+  )
+  let decimal = @model.IonDecimal::new(
+    coefficient=@bigint.BigInt::from_string("-1200000"),
+    exponent=-6,
+  )
+  let timestamp = @model.IonTimestamp::new(
+    year=2024,
+    month=Some(2),
+    day=Some(29),
+    hour=Some(23),
+    minute=Some(59),
+    second=Some(58),
+    offset_minutes=Some(0),
+    fraction_exponent=Some(-9),
+    fraction_coefficient=Some(@bigint.BigInt::from_string("123456789")),
+  )
+
+  assert_eq(@model.IonValue::string("ion").as_string(), Some("ion"))
+  assert_eq(@model.IonValue::bool(false).as_bool(), Some(false))
+  assert_eq(@model.IonValue::bool(false).as_string(), None)
+  assert_eq(@model.IonValue::null(kind=@model.IonNull::Int).as_int(), None)
+
+  match
+    @model.IonValue::int(huge_integer)
+    .with_annotations([@model.IonSymbol::from_text("identifier")])
+    .as_int() {
+    Some(actual) =>
+      assert_eq(actual.to_string(), "123456789012345678901234567890")
+    None => fail("expected annotated integer")
+  }
+  match @model.IonValue::decimal(decimal).as_decimal() {
+    Some(actual) => {
+      assert_eq(actual.coefficient().to_string(), "-1200000")
+      assert_eq(actual.exponent(), -6)
+    }
+    None => fail("expected decimal")
+  }
+  match @model.IonValue::timestamp(timestamp).as_timestamp() {
+    Some(actual) => {
+      assert_eq(actual.year(), 2024)
+      assert_eq(actual.offset_minutes(), Some(0))
+      assert_eq(actual.fraction_exponent(), Some(-9))
+      match actual.fraction_coefficient() {
+        Some(coefficient) => assert_eq(coefficient.to_string(), "123456789")
+        None => fail("expected fractional seconds")
+      }
+    }
+    None => fail("expected timestamp")
+  }
+}
+
+///|
 test "scalar display helpers preserve Ion meaning" {
   assert_eq(@model.IonSymbol::from_text("name").display(), "name")
   assert_eq(@model.IonSymbol::from_sid(12).display(), "$12")
@@ -484,7 +539,7 @@ test "diagnostics expose stable error locations and text binary equivalence" {
   } noraise {
     _ => fail("expected invalid text")
   }
-  assert_eq(syntax_error.location(), { offset: 9, line: 1, column: 10, })
+  assert_eq(syntax_error.location(), { offset: 9, line: 1, column: 10 })
   assert_eq(
     syntax_error.summary(),
     "invalid_syntax: expected an Ion value at 1:10 (offset 9)",

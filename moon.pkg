@@ -2,6 +2,7 @@ import {
   "LL124-Arch/amazon-ion-moonbit-core/decode",
   "LL124-Arch/amazon-ion-moonbit-core/encode",
   "LL124-Arch/amazon-ion-moonbit-core/format_model" @model,
+  "moonbitlang/core/bigint",
   "moonbitlang/core/string",
   "moonbitlang/core/encoding/utf8",
 }
