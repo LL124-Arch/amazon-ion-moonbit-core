@@ -64,9 +64,40 @@ match value.as_int() {
 
 根包还提供面向完整、有界文档的序列操作：`slice_values` 选择零基范围，`filter_values_by_kind` 按 Ion 类型筛选，`merge_documents` 按输入顺序合并多个文档并检查配置的值、深度、符号、载荷和容器限制。`reencode_text_range` 与 `reencode_binary_range` 则复用解析器和写出器来选择一段文档值并生成新的完整文档；二进制输出的版本标记由输出选项控制。它们不是流式 API。
 
+## 写出前预检与诊断
+
+调用方如果先构造了 Ion 值，可以在写出前用 `preflight_values` 对可从值模型测得的预算做一次检查。成功时返回 `IonStats`；失败时仍抛出带精确 `LimitKind` 的 `IonError::Limit`，便于按资源类别恢复或记录。最终文本或二进制大小依旧由编码器的总字节限制检查，因为逃逸和二进制长度编码会影响实际输出大小。
+
+```moonbit
+import {
+  "LL124-Arch/amazon-ion-moonbit-core" @ion,
+  "LL124-Arch/amazon-ion-moonbit-core/format_model" @model,
+}
+
+let values = @ion.parse_text("{name: \"ion\"}")
+let stats = @ion.preflight_values(
+  values[:],
+  limits=@model.Limits::new(max_depth=8, max_text_bytes=1024),
+)
+println("values: \{stats.value_count()}")
+
+let limit_error = try @ion.preflight_values(
+  values[:],
+  limits=@model.Limits::new(max_values=0),
+) catch {
+  error => error
+} noraise {
+  _ => fail("expected configured limit")
+}
+match limit_error.limit_kind() {
+  Some(kind) => println("budget exceeded: \{to_repr(kind)}")
+  None => println(limit_error.summary())
+}
+```
+
 ## 互操作诊断
 
-`encode_hex` 和 `decode_hex` 提供稳定的小写十六进制转换；解码器允许 ASCII 空白与 `#` 行注释，因而可以直接读取仓库中的可审查二进制 fixture。`decode_hex` 会拒绝非十六进制字符和不完整字节对。`IonError::location()` 将错误的偏移、行和列封装为 `IonLocation`，`IonError::summary()` 则提供适合日志的稳定摘要。需要核对同一文档的两种表示时，`diagnose_text_binary` 返回两端的顶层值数量和精确匹配结果；比较不会重排字段、丢弃重复字段、注解或未解析 symbol SID。
+`encode_hex` 和 `decode_hex` 提供稳定的小写十六进制转换；解码器允许 ASCII 空白与 `#` 行注释，因而可以直接读取仓库中的可审查二进制 fixture。`decode_hex` 会拒绝非十六进制字符和不完整字节对。`IonError::location()` 将错误的偏移、行和列封装为 `IonLocation`，其 `format()` 固定为 `line:column (offset N)`；`IonError::summary()` 则提供适合日志的稳定摘要。`IonError::limit_kind()` 让调用方在不解析摘要文本的情况下识别资源预算。需要核对同一文档的两种表示时，`diagnose_text_binary` 返回两端的顶层值数量和精确匹配结果；比较不会重排字段、丢弃重复字段、注解或未解析 symbol SID。
 
 ## 验证与样例
 

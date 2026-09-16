@@ -575,6 +575,12 @@ pub(all) struct IonLocation {
 } derive(Debug, Eq)
 
 ///|
+/// Render this location in the stable `line:column (offset N)` form.
+pub fn IonLocation::format(self : IonLocation) -> String {
+  "\{self.line}:\{self.column} (offset \{self.offset})"
+}
+
+///|
 /// Return the zero-based offset and one-based line and column of this error.
 pub fn IonError::location(self : IonError) -> IonLocation {
   { offset: self.offset(), line: self.line(), column: self.column() }
@@ -583,7 +589,7 @@ pub fn IonError::location(self : IonError) -> IonLocation {
 ///|
 /// Return a compact, stable description suitable for logs and diagnostics.
 pub fn IonError::summary(self : IonError) -> String {
-  "\{error_kind_label(self.kind())}: \{self.message()} at \{self.line()}:\{self.column()} (offset \{self.offset()})"
+  "\{error_kind_label(self.kind())}: \{self.message()} at \{self.location().format()}"
 }
 
 ///|
@@ -654,6 +660,15 @@ pub fn IonError::is_limit(self : IonError) -> Bool {
   match self {
     Limit(..) => true
     _ => false
+  }
+}
+
+///|
+/// Return the precise resource budget for a limit error without parsing text.
+pub fn IonError::limit_kind(self : IonError) -> LimitKind? {
+  match self {
+    Limit(kind~, ..) => Some(kind)
+    _ => None
   }
 }
 
