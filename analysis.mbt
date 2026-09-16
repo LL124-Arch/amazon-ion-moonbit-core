@@ -49,6 +49,16 @@ pub fn IonStats::payload_bytes(self : IonStats) -> Int {
 }
 
 ///|
+/// Check the measured value, depth, symbol, text, and binary budgets.
+pub fn IonStats::fits(self : IonStats, limits : @model.Limits) -> Bool {
+  self.value_count <= limits.max_values() &&
+  self.max_depth <= limits.max_depth() &&
+  self.symbol_count <= limits.max_symbols() &&
+  self.text_bytes <= limits.max_text_bytes() &&
+  self.blob_bytes <= limits.max_blob_bytes()
+}
+
+///|
 fn IonStats::observe(
   self : IonStats,
   value : @model.IonValue,

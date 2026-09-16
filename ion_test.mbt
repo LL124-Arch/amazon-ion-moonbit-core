@@ -302,3 +302,30 @@ test "nested path queries preserve order and bounds" {
   assert_eq(select_path(value, ["service", "missing"][:]).length(), 0)
   assert_eq(select_index(value.get_field("service").unwrap(), -1), None)
 }
+
+///|
+test "preflight limits and error classification" {
+  let values = parse_text("{name: \"ion\", items: [1, 2]}") catch { _ => [] }
+  let stats = analyze(values[:])
+  assert_eq(stats.fits(@model.Limits::default()), true)
+  let shallow = @model.Limits::new(max_depth=1)
+  assert_eq(stats.fits(shallow), false)
+
+  let limit_error = @model.IonError::Limit(
+    kind=@model.LimitKind::Values,
+    offset=4,
+    line=1,
+    column=5,
+    message="value limit exceeded",
+  )
+  assert_eq(limit_error.is_limit(), true)
+  assert_eq(limit_error.kind(), @model.ErrorKind::LimitExceeded)
+  let parse_error = @model.IonError::Parse(
+    kind=@model.ErrorKind::InvalidSyntax,
+    offset=0,
+    line=1,
+    column=1,
+    message="bad value",
+  )
+  assert_eq(parse_error.is_limit(), false)
+}
