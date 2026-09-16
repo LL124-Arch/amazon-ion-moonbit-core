@@ -38,6 +38,10 @@ let text = @ion.encode_text(decoded[:])
 
 需要更细的包边界时，可以直接使用 `decode`、`encode` 和 `format_model`。`examples/tiny_read` 展示文本读取后再写出，`examples/tiny_write` 展示从模型构造 struct 并生成文本。
 
+## 文档序列处理
+
+根包还提供面向完整、有界文档的序列操作：`slice_values` 选择零基范围，`filter_values_by_kind` 按 Ion 类型筛选，`merge_documents` 按输入顺序合并多个文档并检查配置的值、深度、符号、载荷和容器限制。`reencode_text_range` 与 `reencode_binary_range` 则复用解析器和写出器来选择一段文档值并生成新的完整文档；二进制输出的版本标记由输出选项控制。它们不是流式 API。
+
 ## 验证与样例
 
 仓库中的 `fixtures/valid` 保存文本样例和最小二进制样例；`ion_test.mbt` 覆盖空容器、嵌套值、注解、重复字段、符号表、decimal、timestamp、blob/clob、截断输入和资源限制。
