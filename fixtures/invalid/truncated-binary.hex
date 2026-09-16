@@ -1,0 +1,2 @@
+# A string descriptor claims two payload bytes but only one follows.
+E0 01 00 EA 82 61

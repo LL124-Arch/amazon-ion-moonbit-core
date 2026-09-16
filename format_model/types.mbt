@@ -496,6 +496,42 @@ pub(all) suberror IonError {
 } derive(Debug)
 
 ///|
+/// A stable source position carried by an Ion diagnostic.
+pub(all) struct IonLocation {
+  offset : Int
+  line : Int
+  column : Int
+} derive(Debug, Eq)
+
+///|
+/// Return the zero-based offset and one-based line and column of this error.
+pub fn IonError::location(self : IonError) -> IonLocation {
+  { offset: self.offset(), line: self.line(), column: self.column() }
+}
+
+///|
+/// Return a compact, stable description suitable for logs and diagnostics.
+pub fn IonError::summary(self : IonError) -> String {
+  "\{error_kind_label(self.kind())}: \{self.message()} at \{self.line()}:\{self.column()} (offset \{self.offset()})"
+}
+
+///|
+fn error_kind_label(kind : ErrorKind) -> String {
+  match kind {
+    ErrorKind::UnexpectedEof => "unexpected_eof"
+    ErrorKind::InvalidSyntax => "invalid_syntax"
+    ErrorKind::InvalidBinary => "invalid_binary"
+    ErrorKind::InvalidUtf8 => "invalid_utf8"
+    ErrorKind::InvalidNumber => "invalid_number"
+    ErrorKind::InvalidTimestamp => "invalid_timestamp"
+    ErrorKind::InvalidSymbol => "invalid_symbol"
+    ErrorKind::InvalidLength => "invalid_length"
+    ErrorKind::UnsupportedVersion => "unsupported_version"
+    ErrorKind::LimitExceeded => "limit_exceeded"
+  }
+}
+
+///|
 pub fn IonError::kind(self : IonError) -> ErrorKind {
   match self {
     Parse(kind~, ..) => kind
