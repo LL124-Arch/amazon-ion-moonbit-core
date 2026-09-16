@@ -7,6 +7,7 @@
 | Native | locally checked | Run `moon check --target native` when the installed toolchain exposes it |
 | WebAssembly | locally checked | Stable target for CI and release smoke tests |
 | JavaScript | locally checked | Stable target for release smoke tests |
+| Official Ion oracle | differential smoke test | `amazon-ion/ion-js` 5.2.1; scalar, rich struct, round-trip and malformed binary cases |
 | Ion 1.1 | not implemented | Explicitly rejected with version/error boundary |
 | Shared symbol catalog | not implemented | Local symbol table only |
 | Ion Schema / Ion Hash | not implemented | Separate future packages |

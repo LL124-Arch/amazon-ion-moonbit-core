@@ -28,7 +28,7 @@
 ## 最小用法
 
 ```moonbit
-import { "liangqinsheng/ion" @ion }
+import { "LL124-Arch/amazon-ion-moonbit-core" @ion }
 
 let values = @ion.parse_text("{answer: 42, enabled: true}")
 let binary = @ion.encode_binary(values[:])
@@ -37,6 +37,8 @@ let text = @ion.encode_text(decoded[:])
 ```
 
 需要更细的包边界时，可以直接使用 `decode`、`encode` 和 `format_model`。`examples/tiny_read` 展示文本读取后再写出，`examples/tiny_write` 展示从模型构造 struct 并生成文本。
+
+模块标识为 `LL124-Arch/amazon-ion-moonbit-core`，与公开 GitHub 仓库和计划中的 Mooncakes 包名保持一致。
 
 ## 文档序列处理
 
