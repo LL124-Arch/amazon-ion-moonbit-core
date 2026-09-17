@@ -10,5 +10,5 @@
   CI formatter's trailing-comma style.
 
 The generated `_build/` directory and `pkg.generated.mbti` files are ignored by
-Git. Release verification should repeat these checks with the toolchain
-selected for the actual publication environment.
+Git. These checks should be repeated with the toolchain selected for each
+release.
