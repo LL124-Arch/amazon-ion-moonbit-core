@@ -13,7 +13,7 @@
 | `encode` | 文本写出与二进制写出 |
 | 根包 | 对常用 parse/encode 操作的简短转发 API |
 | `fixtures` | 小型有效样例与覆盖说明 |
-| `maintenance` | 规范、互操作性和 Mooncakes 检索记录 |
+| `maintenance` | 规范、互操作性和工具链维护记录 |
 
 ## 支持范围
 
@@ -38,7 +38,7 @@ let text = @ion.encode_text(decoded[:])
 
 需要更细的包边界时，可以直接使用 `decode`、`encode` 和 `format_model`。`examples/tiny_read` 展示文本读取后再写出，`examples/tiny_write` 展示从模型构造 struct 并生成文本。
 
-模块标识为 `LL124-Arch/amazon-ion-moonbit-core`，与公开 GitHub 仓库和计划中的 Mooncakes 包名保持一致。
+模块标识为 `LL124-Arch/amazon-ion-moonbit-core`，与公开 GitHub 仓库的归属保持一致。
 
 ## 安全标量访问
 
