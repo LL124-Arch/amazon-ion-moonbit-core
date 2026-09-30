@@ -100,15 +100,22 @@ fn TextWriter::write_null(self : TextWriter, kind : @model.IonNull) -> Unit {
 }
 
 ///|
-fn TextWriter::write_float(self : TextWriter, value : Float) -> Unit {
+fn TextWriter::write_float(self : TextWriter, value : Double) -> Unit {
   if value.is_nan() {
     self.builder.write_string("nan")
   } else if value.is_pos_inf() {
     self.builder.write_string("+inf")
   } else if value.is_neg_inf() {
     self.builder.write_string("-inf")
+  } else if value == 0.0 && value.reinterpret_as_int64() < 0L {
+    self.builder.write_string("-0e0")
   } else {
-    self.builder.write_string(value.to_string())
+    let text = value.to_string()
+    if text.contains_char('e') || text.contains_char('E') {
+      self.builder.write_string(text)
+    } else {
+      self.builder.write_string(text + "e0")
+    }
   }
 }
 
@@ -253,6 +260,7 @@ fn TextWriter::write_clob(
   self.builder.write_string("{{")
   self.builder.write_char('"')
   self.write_escaped(text, '"')
+  self.builder.write_char('"')
   self.builder.write_string("}}")
 }
 

@@ -163,7 +163,7 @@ fn BinaryWriter::write_value_to(
     @model.IonValue::Timestamp(value) => self.write_timestamp(output, value)
     @model.IonValue::Symbol(value) => {
       let payload = @buffer.Buffer::Buffer()
-      write_var_uint(payload, self.symbol_sid(value))
+      write_unsigned_int(payload, self.symbol_sid(value))
       write_tlv(output, 7, payload.to_bytes())
     }
     @model.IonValue::String(value) => self.write_string(output, value)
@@ -198,10 +198,14 @@ fn BinaryWriter::write_integer(
 fn BinaryWriter::write_float(
   _self : BinaryWriter,
   output : @buffer.Buffer,
-  value : Float,
+  value : Double,
 ) -> Unit {
-  let bits = value.reinterpret_as_int()
+  let bits = value.reinterpret_as_int64()
   let payload = @buffer.Buffer::Buffer()
+  payload.write_byte((bits >> 56).to_byte())
+  payload.write_byte((bits >> 48).to_byte())
+  payload.write_byte((bits >> 40).to_byte())
+  payload.write_byte((bits >> 32).to_byte())
   payload.write_byte((bits >> 24).to_byte())
   payload.write_byte((bits >> 16).to_byte())
   payload.write_byte((bits >> 8).to_byte())
@@ -495,6 +499,21 @@ fn write_var_uint(output : @buffer.Buffer, value : Int) -> Unit {
     } else {
       output.write_byte(digit.to_byte())
     }
+    index -= 1
+  }
+}
+
+///|
+fn write_unsigned_int(output : @buffer.Buffer, value : Int) -> Unit {
+  let bytes : Array[Byte] = []
+  let mut remaining = value
+  while remaining > 0 {
+    bytes.push((remaining & 0xFF).to_byte())
+    remaining /= 256
+  }
+  let mut index = bytes.length() - 1
+  while index >= 0 {
+    output.write_byte(bytes[index])
     index -= 1
   }
 }

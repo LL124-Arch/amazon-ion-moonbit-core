@@ -17,7 +17,7 @@
 
 ## 支持范围
 
-当前实现覆盖 Ion 1.0 的 null、bool、整数、Float、decimal、timestamp、string、symbol、blob、clob、list、sexp、struct、类型注解和局部符号表。文本端也支持长字符串、长 clob、数值分隔符和常用 Ion 转义。
+当前实现覆盖 Ion 1.0 的 null、bool、整数、64 位 Float、decimal、timestamp、string、symbol、blob、clob、list、sexp、struct、类型注解和局部符号表。文本端也支持长字符串、长 clob、数值分隔符和常用 Ion 转义。
 
 `IonValue` 会保留未知 symbol SID、annotation 顺序、struct 字段顺序和重复字段。文本与二进制写出采用保序确定性策略，但不宣称实现外部 Canonical Ion 标准。
 
@@ -42,7 +42,7 @@ let text = @ion.encode_text(decoded[:])
 
 ## 安全标量访问
 
-`format_model` 提供 `IonValue::string`、`bool`、`int`、`decimal` 和 `timestamp` 构造函数，以及对应的 `as_*` 投影。投影会忽略值外层的 Ion annotation；类型不匹配（也包括 typed null）返回 `None`，不会将值强制转换。整数始终以 `BigInt` 保存，decimal 的 coefficient/exponent 和 timestamp 的精度、时区偏移及小数秒均原样保留。
+`format_model` 提供 `IonValue::string`、`bool`、`int`、`float`、`decimal` 和 `timestamp` 构造函数，以及对应的 `as_*` 投影。投影会忽略值外层的 Ion annotation；类型不匹配（也包括 typed null）返回 `None`，不会将值强制转换。整数始终以 `BigInt` 保存，浮点值采用 64 位 `Double`，decimal 的 coefficient/exponent 和 timestamp 的精度、时区偏移及小数秒均原样保留。
 
 ```moonbit
 import {

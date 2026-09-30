@@ -34,7 +34,7 @@ jobs:
           moon build --target native
           moon build --target wasm
           moon build --target js
-      - name: Official Ion differential check
+      - name: Official Ion bidirectional interoperability check
         working-directory: roundtrip_lab
         run: |
           npm ci

@@ -7,7 +7,48 @@ test "text parser and deterministic writer" {
   }
   assert_eq(values.length(), 1)
   let text = @encode.encode_text(values[:]) catch { _ => "" }
-  assert_eq(text, "{name: \"moon\", count: 42, ratio: 1.5, ok: true}")
+  assert_eq(text, "{name: \"moon\", count: 42, ratio: 1.5e0, ok: true}")
+}
+
+///|
+test "Ion floats preserve double precision and signed zero" {
+  let values = @decode.parse_text("1.0000000000000002e0 -0e0") catch { _ => [] }
+  assert_eq(values.length(), 2)
+
+  let binary = @encode.encode_binary(values[:]) catch { _ => b"" }
+  assert_eq(
+    binary, b"\xE0\x01\x00\xEA\x48\x3F\xF0\x00\x00\x00\x00\x00\x01\x48\x80\x00\x00\x00\x00\x00\x00\x00",
+  )
+  let binary_values = @decode.parse_binary(binary) catch { _ => [] }
+  assert_eq(binary_values, values)
+
+  let text = @encode.encode_text(values[:]) catch { _ => "" }
+  assert_eq(text, "1.0000000000000002e0\n-0e0")
+  let text_values = @decode.parse_text(text) catch { _ => [] }
+  assert_eq(text_values, values)
+}
+
+///|
+test "float constructor and accessor preserve precision through annotations" {
+  let value = @model.IonValue::float(1.0000000000000002e0)
+  let annotated = value.with_annotations([
+    @model.IonSymbol::from_text("measure"),
+  ])
+  assert_eq(annotated.as_float(), Some(1.0000000000000002e0))
+  assert_eq(@model.IonValue::string("not a float").as_float(), None)
+  assert_eq(@model.IonValue::null(kind=@model.IonNull::Float).as_float(), None)
+}
+
+///|
+test "binary single precision float widens without losing its value" {
+  let binary = b"\xE0\x01\x00\xEA\x44\x3F\xC0\x00\x00"
+  let values = @decode.parse_binary(binary) catch { _ => [] }
+  assert_eq(values.length(), 1)
+  assert_eq(@encode.encode_text(values[:]), "1.5e0")
+  assert_eq(
+    @encode.encode_binary(values[:]),
+    b"\xE0\x01\x00\xEA\x48\x3F\xF8\x00\x00\x00\x00\x00\x00",
+  )
 }
 
 ///|
@@ -30,6 +71,28 @@ test "binary scalar fixture" {
   assert_eq(binary, b"\xE0\x01\x00\xEA\x21\x01\x11\x83ion")
   let decoded = @decode.parse_binary(binary) catch { _ => [] }
   assert_eq(decoded.length(), 3)
+}
+
+///|
+test "binary symbol values use unsigned integer payloads" {
+  let values = @decode.parse_text("alpha") catch { _ => [] }
+  let binary = @encode.encode_binary(values[:]) catch { _ => b"" }
+  assert_eq(binary[binary.length() - 2], 0x71)
+  assert_eq(binary[binary.length() - 1], 0x0A)
+  let decoded = @decode.parse_binary(binary) catch { _ => [] }
+  assert_eq(decoded, values)
+}
+
+///|
+test "binary symbol SID overflow is rejected" {
+  let error = try
+    @decode.parse_binary(b"\xE0\x01\x00\xEA\x74\x80\x00\x00\x00")
+  catch {
+    error => error
+  } noraise {
+    _ => fail("expected an overflowing symbol SID to be rejected")
+  }
+  assert_eq(error.kind(), @model.ErrorKind::InvalidBinary)
 }
 
 ///|
@@ -169,6 +232,12 @@ test "long quoted strings and clobs" {
     _ => b""
   }
   assert_eq(clob, b"ABC\nDEF")
+
+  let clob_values = [values[1]]
+  let encoded = @encode.encode_text(clob_values[:]) catch { _ => "" }
+  assert_eq(encoded, "{{\"ABC\\nDEF\"}}")
+  let decoded = @decode.parse_text(encoded) catch { _ => [] }
+  assert_eq(decoded, clob_values)
 }
 
 ///|

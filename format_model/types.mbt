@@ -160,7 +160,7 @@ pub(all) enum IonValue {
   Null(IonNull)
   Bool(Bool)
   Int(@bigint.BigInt)
-  Float(Float)
+  Float(Double)
   Decimal(IonDecimal)
   Timestamp(IonTimestamp)
   Symbol(IonSymbol)
@@ -209,6 +209,12 @@ pub fn IonValue::bool(value : Bool) -> IonValue {
 /// Construct an Ion integer without narrowing its arbitrary-precision payload.
 pub fn IonValue::int(value : @bigint.BigInt) -> IonValue {
   Int(value)
+}
+
+///|
+/// Construct an Ion float using its full 64-bit precision.
+pub fn IonValue::float(value : Double) -> IonValue {
+  Float(value)
 }
 
 ///|
@@ -377,6 +383,15 @@ pub fn IonValue::as_bool(self : IonValue) -> Bool? {
 pub fn IonValue::as_int(self : IonValue) -> @bigint.BigInt? {
   match self.without_annotations() {
     Int(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+/// Return the 64-bit floating-point payload when the value is an Ion float.
+pub fn IonValue::as_float(self : IonValue) -> Double? {
+  match self.without_annotations() {
+    Float(value) => Some(value)
     _ => None
   }
 }

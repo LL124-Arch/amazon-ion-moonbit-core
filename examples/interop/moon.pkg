@@ -1,0 +1,8 @@
+import {
+  "LL124-Arch/amazon-ion-moonbit-core" @ion,
+  "LL124-Arch/amazon-ion-moonbit-core/format_model" @model,
+  "moonbitlang/core/env",
+  "moonbitlang/core/encoding/utf8",
+}
+
+pkgtype(kind: "executable")

@@ -365,13 +365,13 @@ fn TextParser::parse_scalar_token(
     return @model.IonValue::Bool(false)
   }
   if token == "nan" {
-    return @model.IonValue::Float(@float.not_a_number)
+    return @model.IonValue::Float(@double.not_a_number)
   }
   if token == "+inf" {
-    return @model.IonValue::Float(@float.infinity)
+    return @model.IonValue::Float(@double.infinity)
   }
   if token == "-inf" {
-    return @model.IonValue::Float(@float.neg_infinity)
+    return @model.IonValue::Float(@double.neg_infinity)
   }
   if self.looks_like_number(token) && self.looks_like_timestamp(token) {
     return @model.IonValue::Timestamp(self.parse_timestamp(token))
@@ -521,7 +521,7 @@ fn TextParser::parse_decimal(
 fn TextParser::parse_double(
   self : TextParser,
   token : String,
-) -> Float raise @model.IonError {
+) -> Double raise @model.IonError {
   if !valid_numeric_separators(token) {
     raise self.syntax("invalid numeric separator")
   }
@@ -529,7 +529,7 @@ fn TextParser::parse_double(
   let value = @string.parse_double(normalized[:]) catch {
     _ => raise self.syntax("invalid floating-point literal")
   }
-  Float::from_double(value)
+  value
 }
 
 ///|

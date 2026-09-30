@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- preserve Ion Float binary64 precision and signed zero; `IonValue::Float` now
+  carries MoonBit `Double` instead of 32-bit `Float`;
+- add `IonValue::float` and `IonValue::as_float` for safe construction and
+  projection of Ion Float values;
+- encode and decode binary symbol-value SIDs as unsigned integers, while keeping
+  field names and annotations in VarUInt form;
+- close the quoted clob emitted by the text writer;
+- replace the self-contained `ion-js` smoke test with a bidirectional MoonBit
+  and `ion-js` interoperability check.
+
 ## 0.1.2 — 2026-09-30
 
 - enforce depth, value-count, container-item, annotation, and blob-size limits

@@ -36,8 +36,8 @@ npm ci
 node ion-js-diff.mjs
 ```
 
-成功时脚本输出包含 `"oracle":"amazon-ion/ion-js"`、`"version":"5.2.1"` 和 `"result":"passed"` 的 JSON。检查覆盖二进制标量 fixture、带注解且含重复字段的 struct 文本解析、二进制往返，以及截断二进制输入拒绝。
+成功时脚本输出包含 `"oracle":"amazon-ion/ion-js"`、`"version":"5.2.1"` 和 `"result":"passed"` 的 JSON。脚本会双向执行：MoonBit 产生的文本和二进制由 `ion-js` 解析；`ion-js` 产生的文本和二进制由 MoonBit 解析。样例覆盖注解、重复 struct 字段、大整数、双精度浮点数和负零、decimal、timestamp、blob/clob、sexp/list，并检查截断 VarUInt 被 MoonBit 拒绝。
 
-脚本检查 Ion 值语义，不比较编码后的字节是否完全相同；规范允许多个有效的符号表和长度编码。fixture 以可审阅的文本和十六进制形式保存在 `fixtures/`。
+脚本比较 Ion 值语义，不要求两种实现生成完全相同的字节布局；规范允许不同的有效长度编码和符号表布局。
 
 这些演示是有边界的 Ion 1.0 互操作 smoke check，不代表完整规范一致性套件。

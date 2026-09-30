@@ -256,7 +256,7 @@ fn BinaryParser::parse_float(
   self : BinaryParser,
   length : Int,
   end : Int,
-) -> Float raise @model.IonError {
+) -> Double raise @model.IonError {
   if length == 0 {
     return 0.0
   }
@@ -265,7 +265,7 @@ fn BinaryParser::parse_float(
     while self.pos < end {
       bits = bits * 256 + self.read_byte(end).to_int()
     }
-    return Float::reinterpret_from_int(bits)
+    return Float::reinterpret_from_int(bits).to_double()
   }
   if length == 8 {
     let mut bits : Int64 = Int64::from_int(0)
@@ -273,7 +273,7 @@ fn BinaryParser::parse_float(
       bits = bits * Int64::from_int(256) +
         Int64::from_int(self.read_byte(end).to_int())
     }
-    return Float::from_double(Int64::reinterpret_as_double(bits))
+    return Int64::reinterpret_as_double(bits)
   }
   raise self.invalid("binary float must be 0, 4, or 8 bytes")
 }
@@ -368,7 +368,7 @@ fn BinaryParser::parse_symbol(
   if self.pos == end {
     return @model.IonSymbol::from_sid(0)
   }
-  let sid = self.read_var_uint(end)
+  let sid = self.read_unsigned_int(end)
   self.resolve_symbol(sid)
 }
 
@@ -559,6 +559,22 @@ fn BinaryParser::read_var_uint(
     if (byte & 0x80) != 0 {
       break
     }
+  }
+  value
+}
+
+///|
+fn BinaryParser::read_unsigned_int(
+  self : BinaryParser,
+  end : Int,
+) -> Int raise @model.IonError {
+  let mut value = 0
+  while self.pos < end {
+    let byte = self.read_byte(end).to_int()
+    if value > (2147483647 - byte) / 256 {
+      raise self.invalid("symbol ID overflows the supported integer range")
+    }
+    value = value * 256 + byte
   }
   value
 }
