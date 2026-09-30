@@ -1,6 +1,6 @@
 name = "LL124-Arch/amazon-ion-moonbit-core"
 
-version = "0.1.1"
+version = "0.1.2"
 
 readme = "README.md"
 

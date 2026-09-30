@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.2 — 2026-09-30
+
+- enforce depth, value-count, container-item, annotation, and blob-size limits
+  consistently across text and binary parsing and encoding;
+- correct text output for symbols represented by unresolved SIDs;
+- add boundary coverage for exact limits, one-over failures, malformed binary
+  framing, and NOP padding.
+
 ## 0.1.1 — 2026-09-30
 
 - added a reproducible acceptance demo with expected example and interop output;
