@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 — 2026-09-30
+
+- added a reproducible acceptance demo with expected example and interop output;
+- documented architecture decisions, AI-assisted development, and Ion source boundaries;
+- aligned the validation commands with the CI workflow.
+
 ## 0.1.0 — 2026-09-17
 
 - aligned the module name and repository metadata with

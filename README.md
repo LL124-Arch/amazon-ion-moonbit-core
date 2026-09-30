@@ -104,8 +104,8 @@ match limit_error.limit_kind() {
 仓库中的 `fixtures/valid` 保存文本样例和最小二进制样例；`ion_test.mbt` 覆盖空容器、嵌套值、注解、重复字段、符号表、decimal、timestamp、blob/clob、截断输入和资源限制。
 
 ```text
-moon fmt
-moon check --deny-warn
+moon fmt --check
+moon check
 moon test
 moon test --target native
 moon test --target wasm
@@ -116,6 +116,18 @@ moon build --target wasm
 moon build --target js
 moon doc --quiet
 ```
+
+面向评审的逐步演示命令和预期输出见 [`roundtrip_lab/README.md`](roundtrip_lab/README.md)。项目架构取舍、AI 工具使用和规范来源见[开发复盘](maintenance/development-retrospective.md)。
+
+官方 Ion 实现互操作检查：
+
+```text
+cd roundtrip_lab
+npm ci
+node ion-js-diff.mjs
+```
+
+`roundtrip_lab` 使用锁定的 `amazon-ion/ion-js` 5.2.1，仅作为开发时的对照实现，不是运行时依赖。
 
 ## 规范参考
 

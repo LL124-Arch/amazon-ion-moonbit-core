@@ -1,35 +1,43 @@
-# Round-trip lab
+# 验收演示与互操作检查
 
-This directory records the smallest repeatable checks for the Ion 1.0 text and
-binary representations. The executable examples intentionally use only the
-public package APIs, so they can become future compatibility smoke tests.
+本目录记录面向评审的最小可复现演示。示例只调用公开包 API；互操作脚本使用 Amazon 官方 `amazon-ion/ion-js` 作为开发期对照，不会成为 MoonBit 模块的运行时依赖。
 
-Suggested commands:
+## 环境要求
+
+- MoonBit CLI；本次本地验证环境为 `moon 0.1.20260920`，可先运行 `moon version --all` 查看版本。
+- Node.js 和 npm；`package-lock.json` 固定互操作检查所用的 `ion-js` 5.2.1。
+
+## MoonBit 示例
+
+在仓库根目录运行：
 
 ```text
+moon fmt --check
 moon check
 moon test
 moon run examples/tiny_read
 moon run examples/tiny_write
 ```
 
-## Official Ion implementation differential check
-
-The repeatable Node.js check uses Amazon's official `amazon-ion/ion-js` package
-5.2.1. It reads the checked-in binary scalar fixture, parses an annotated Ion
-1.0 struct with duplicate fields and rich scalar values, writes it back to Ion
-binary, reads it again, and rejects the checked-in truncated binary fixture.
+预期示例输出：
 
 ```text
-npm install
+{service: "ion", enabled: true}
+{message: "hello from MoonBit", answer: 42}
+```
+
+## 官方 Ion 实现互操作检查
+
+在仓库根目录运行：
+
+```text
+cd roundtrip_lab
+npm ci
 node ion-js-diff.mjs
 ```
 
-The script intentionally checks semantic properties rather than byte-for-byte
-writer output: Ion permits different valid symbol-table and length encodings.
-The package is a development-time oracle only and is not a runtime dependency
-of the MoonBit module.
+成功时脚本输出包含 `"oracle":"amazon-ion/ion-js"`、`"version":"5.2.1"` 和 `"result":"passed"` 的 JSON。检查覆盖二进制标量 fixture、带注解且含重复字段的 struct 文本解析、二进制往返，以及截断二进制输入拒绝。
 
-The current binary fixture is written as hex so that it remains reviewable in a
-source checkout. It represents an Ion version marker followed by `1`, `true`,
-and the UTF-8 string `ion`.
+脚本检查 Ion 值语义，不比较编码后的字节是否完全相同；规范允许多个有效的符号表和长度编码。fixture 以可审阅的文本和十六进制形式保存在 `fixtures/`。
+
+这些演示是有边界的 Ion 1.0 互操作 smoke check，不代表完整规范一致性套件。

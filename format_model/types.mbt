@@ -23,17 +23,17 @@ pub(all) struct IonSymbol {
 
 ///|
 pub fn IonSymbol::from_text(text : String) -> IonSymbol {
-  { text: Some(text), sid: None }
+  { text: Some(text), sid: None, }
 }
 
 ///|
 pub fn IonSymbol::from_sid(sid : Int) -> IonSymbol {
-  { text: None, sid: Some(sid) }
+  { text: None, sid: Some(sid), }
 }
 
 ///|
 pub fn IonSymbol::unknown() -> IonSymbol {
-  { text: None, sid: Some(0) }
+  { text: None, sid: Some(0), }
 }
 
 ///|
@@ -57,7 +57,7 @@ pub fn IonDecimal::new(
   coefficient~ : @bigint.BigInt,
   exponent~ : Int,
 ) -> IonDecimal {
-  { coefficient, exponent }
+  { coefficient, exponent, }
 }
 
 ///|
@@ -583,7 +583,7 @@ pub fn IonLocation::format(self : IonLocation) -> String {
 ///|
 /// Return the zero-based offset and one-based line and column of this error.
 pub fn IonError::location(self : IonError) -> IonLocation {
-  { offset: self.offset(), line: self.line(), column: self.column() }
+  { offset: self.offset(), line: self.line(), column: self.column(), }
 }
 
 ///|
@@ -762,7 +762,7 @@ pub(all) struct EncodeOptions {
 
 ///|
 pub fn EncodeOptions::default() -> EncodeOptions {
-  { pretty: false, indent: 2, emit_bvm: true, limits: Limits::default() }
+  { pretty: false, indent: 2, emit_bvm: true, limits: Limits::default(), }
 }
 
 ///|
@@ -772,7 +772,7 @@ pub fn EncodeOptions::new(
   emit_bvm? : Bool = true,
   limits? : Limits = Limits::default(),
 ) -> EncodeOptions {
-  { pretty, indent, emit_bvm, limits }
+  { pretty, indent, emit_bvm, limits, }
 }
 
 ///|
@@ -781,7 +781,7 @@ pub fn EncodeOptions::compact(
   emit_bvm? : Bool = true,
   limits? : Limits = Limits::default(),
 ) -> EncodeOptions {
-  { pretty: false, indent: 2, emit_bvm, limits }
+  { pretty: false, indent: 2, emit_bvm, limits, }
 }
 
 ///|
@@ -791,7 +791,7 @@ pub fn EncodeOptions::readable(
   emit_bvm? : Bool = true,
   limits? : Limits = Limits::default(),
 ) -> EncodeOptions raise IonError {
-  let options = { pretty: true, indent, emit_bvm, limits }
+  let options = { pretty: true, indent, emit_bvm, limits, }
   options.validate()
   options
 }
