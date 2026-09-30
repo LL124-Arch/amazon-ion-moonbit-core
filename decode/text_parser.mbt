@@ -46,6 +46,9 @@ fn TextParser::parse_value(
   self : TextParser,
 ) -> @model.IonValue raise @model.IonError {
   self.skip_space_and_comments()
+  if self.depth >= self.limits.max_depth() {
+    raise self.limit(@model.LimitKind::Depth, "nesting depth limit exceeded")
+  }
   if self.values >= self.limits.max_values() {
     raise self.limit(@model.LimitKind::Values, "value limit exceeded")
   }
@@ -58,6 +61,12 @@ fn TextParser::parse_value(
       let symbol = match value {
         @model.IonValue::Symbol(symbol) => symbol
         _ => raise self.syntax("annotation must start with a symbol")
+      }
+      if annotations.length() >= self.limits.max_container_items() {
+        raise self.limit(
+          @model.LimitKind::ContainerItems,
+          "annotation count limit exceeded",
+        )
       }
       annotations.push(symbol)
       ignore(self.advance())
@@ -302,6 +311,12 @@ fn TextParser::parse_token_value(
       if part.is_empty() {
         raise self.syntax("empty annotation")
       }
+      if annotations.length() >= self.limits.max_container_items() {
+        raise self.limit(
+          @model.LimitKind::ContainerItems,
+          "annotation count limit exceeded",
+        )
+      }
       annotations.push(self.symbol_from_token(part))
     }
     return @model.IonValue::Annotated(annotations, self.parse_atom())
@@ -314,6 +329,12 @@ fn TextParser::parse_token_value(
       let part = annotation_parts[index].to_owned()
       if part.is_empty() {
         raise self.syntax("empty annotation")
+      }
+      if annotations.length() >= self.limits.max_container_items() {
+        raise self.limit(
+          @model.LimitKind::ContainerItems,
+          "annotation count limit exceeded",
+        )
       }
       annotations.push(self.symbol_from_token(part))
       index += 1

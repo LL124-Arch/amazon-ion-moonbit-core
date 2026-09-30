@@ -139,10 +139,19 @@ fn BinaryWriter::write_value_to(
   output : @buffer.Buffer,
   value : @model.IonValue,
 ) -> Unit raise @model.IonError {
-  if self.values >= self.options.limits().max_values() {
-    raise self.limit(@model.LimitKind::Values, "value limit exceeded")
+  if self.depth >= self.options.limits().max_depth() {
+    raise self.limit(@model.LimitKind::Depth, "nesting depth limit exceeded")
   }
-  self.values += 1
+  let is_annotation = match value {
+    @model.IonValue::Annotated(_, _) => true
+    _ => false
+  }
+  if !is_annotation {
+    if self.values >= self.options.limits().max_values() {
+      raise self.limit(@model.LimitKind::Values, "value limit exceeded")
+    }
+    self.values += 1
+  }
   match value {
     @model.IonValue::Null(kind) =>
       output.write_byte(((null_type(kind) << 4) | 15).to_byte())

@@ -34,10 +34,19 @@ fn TextWriter::write_value(
   self : TextWriter,
   value : @model.IonValue,
 ) -> Unit raise @model.IonError {
-  if self.values >= self.options.limits().max_values() {
-    raise self.limit(@model.LimitKind::Values, "value limit exceeded")
+  if self.depth >= self.options.limits().max_depth() {
+    raise self.limit(@model.LimitKind::Depth, "nesting depth limit exceeded")
   }
-  self.values += 1
+  let is_annotation = match value {
+    @model.IonValue::Annotated(_, _) => true
+    _ => false
+  }
+  if !is_annotation {
+    if self.values >= self.options.limits().max_values() {
+      raise self.limit(@model.LimitKind::Values, "value limit exceeded")
+    }
+    self.values += 1
+  }
   match value {
     @model.IonValue::Null(kind) => self.write_null(kind)
     @model.IonValue::Bool(value) =>
@@ -54,6 +63,12 @@ fn TextWriter::write_value(
     @model.IonValue::Sexp(values) => self.write_sexp(values)
     @model.IonValue::Struct(fields) => self.write_struct(fields)
     @model.IonValue::Annotated(annotations, value) => {
+      if annotations.length() > self.options.limits().max_container_items() {
+        raise self.limit(
+          @model.LimitKind::ContainerItems,
+          "annotation count limit exceeded",
+        )
+      }
       for annotation in annotations {
         self.write_symbol(annotation)
         self.builder.write_string("::")
@@ -178,7 +193,7 @@ fn TextWriter::write_symbol(
       self.write_escaped(text, '\'')
       self.builder.write_char('\'')
     }
-    None => self.builder.write_string("${symbol.sid_value().unwrap_or(0)}")
+    None => self.builder.write_string("$\{symbol.sid_value().unwrap_or(0)}")
   }
 }
 
@@ -246,6 +261,12 @@ fn TextWriter::write_list(
   self : TextWriter,
   values : Array[@model.IonValue],
 ) -> Unit raise @model.IonError {
+  if values.length() > self.options.limits().max_container_items() {
+    raise self.limit(
+      @model.LimitKind::ContainerItems,
+      "container item limit exceeded",
+    )
+  }
   self.enter_container()
   self.builder.write_char('[')
   if self.options.pretty() && values.length() > 0 {
@@ -271,6 +292,12 @@ fn TextWriter::write_sexp(
   self : TextWriter,
   values : Array[@model.IonValue],
 ) -> Unit raise @model.IonError {
+  if values.length() > self.options.limits().max_container_items() {
+    raise self.limit(
+      @model.LimitKind::ContainerItems,
+      "container item limit exceeded",
+    )
+  }
   self.enter_container()
   self.builder.write_char('(')
   if self.options.pretty() && values.length() > 0 {
@@ -300,6 +327,12 @@ fn TextWriter::write_struct(
   self : TextWriter,
   fields : Array[(@model.IonSymbol, @model.IonValue)],
 ) -> Unit raise @model.IonError {
+  if fields.length() > self.options.limits().max_container_items() {
+    raise self.limit(
+      @model.LimitKind::ContainerItems,
+      "struct field limit exceeded",
+    )
+  }
   self.enter_container()
   self.builder.write_char('{')
   if self.options.pretty() && fields.length() > 0 {

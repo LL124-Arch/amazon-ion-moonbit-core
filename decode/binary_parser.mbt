@@ -4,6 +4,7 @@ priv struct BinaryParser {
   mut pos : Int
   limits : @model.Limits
   mut values : Int
+  mut suppressed_values : Int
   mut depth : Int
   mut symbols : Array[String?]
 }
@@ -22,7 +23,7 @@ fn BinaryParser::new(data : Bytes, limits : @model.Limits) -> BinaryParser {
     Some("max_id"),
     Some("$ion_shared_symbol_table"),
   ]
-  { data, pos: 0, limits, values: 0, depth: 0, symbols, }
+  { data, pos: 0, limits, values: 0, suppressed_values: 0, depth: 0, symbols, }
 }
 
 ///|
@@ -124,13 +125,22 @@ fn BinaryParser::parse_value(
   if self.pos >= bound {
     raise self.unexpected_eof()
   }
-  if self.values >= self.limits.max_values() {
-    raise self.limit(@model.LimitKind::Values, "value limit exceeded")
-  }
-  self.values += 1
   let descriptor = self.read_byte(bound)
   let type_code = descriptor.to_int() >> 4
   let length_code = descriptor.to_int() & 0x0F
+  let is_nop = type_code == 0 && length_code != 15
+  let is_annotation_wrapper = type_code == 14
+  if !is_nop && !is_annotation_wrapper {
+    if self.depth >= self.limits.max_depth() {
+      raise self.limit(@model.LimitKind::Depth, "nesting depth limit exceeded")
+    }
+    if self.suppressed_values == 0 {
+      if self.values >= self.limits.max_values() {
+        raise self.limit(@model.LimitKind::Values, "value limit exceeded")
+      }
+      self.values += 1
+    }
+  }
   if type_code == 0 && length_code == 0 {
     return None
   }
@@ -477,9 +487,24 @@ fn BinaryParser::parse_annotation(
   let annotation_end = self.payload_end(annotation_size, end)
   let annotations : Array[@model.IonSymbol] = []
   while self.pos < annotation_end {
+    if annotations.length() >= self.limits.max_container_items() {
+      raise self.limit(
+        @model.LimitKind::ContainerItems,
+        "annotation count limit exceeded",
+      )
+    }
     annotations.push(self.resolve_symbol(self.read_var_uint(annotation_end)))
   }
-  let value = match self.parse_value(end) {
+  let is_symbol_table = annotations.length() > 0 &&
+    self.is_system_symbol(annotations[0], "$ion_symbol_table", 3)
+  if is_symbol_table {
+    self.suppressed_values += 1
+  }
+  let parsed_value = self.parse_value(end)
+  if is_symbol_table {
+    self.suppressed_values -= 1
+  }
+  let value = match parsed_value {
     Some(value) => value
     None => raise self.invalid("annotation wrapper has no value")
   }
